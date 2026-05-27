@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Talent Directory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #F7F6F3;
+      --surface:   #FFFFFF;
+      --border:    rgba(0,0,0,0.08);
+      --border-md: rgba(0,0,0,0.14);
+      --text:      #1A1A1A;
+      --muted:     #6B6B6B;
+      --hint:      #9B9B9B;
+      --accent:    #534AB7;
+      --accent-bg: #EEEDFE;
+      --accent-fg: #3C3489;
+      --green-bg:  #E1F5EE;
+      --green-fg:  #085041;
+      --blue-bg:   #E6F1FB;
+      --blue-fg:   #0C447C;
+      --amber-bg:  #FAEEDA;
+      --amber-fg:  #633806;
+      --coral-bg:  #FAECE7;
+      --coral-fg:  #712B13;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow:    0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── Layout ── */
+    .page { max-width: 1200px; margin: 0 auto; padding: 0 24px 80px; }
+
+    /* ── Header ── */
+    .site-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 0 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .site-header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+    .site-header p { font-size: 14px; color: var(--muted); margin-top: 2px; }
+    .sync-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border-md);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .sync-btn:hover { background: var(--bg); }
+    .sync-btn i { font-size: 15px; }
+    .sync-btn.spinning i { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Setup banner ── */
+    .setup-banner {
+      background: var(--blue-bg);
+      border: 1px solid rgba(55,138,221,0.2);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: none;
+    }
+    .setup-banner.visible { display: block; }
+    .setup-banner h3 { font-size: 14px; font-weight: 600; color: var(--blue-fg); margin-bottom: 6px; }
+    .setup-banner ol { font-size: 13px; color: var(--blue-fg); padding-left: 18px; line-height: 1.9; }
+    .setup-banner code { font-family: 'DM Mono', monospace; background: rgba(12,68,124,0.1); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+    .setup-banner a { color: var(--accent); }
+
+    /* ── Paste fallback ── */
+    .paste-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-bottom: 24px;
+      display: none;
+    }
+    .paste-section.visible { display: block; }
+    .paste-section label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 8px; }
+    .paste-section textarea {
+      width: 100%; height: 100px;
+      font-size: 12px; font-family: 'DM Mono', monospace;
+      padding: 10px 12px;
+      border: 1px solid var(--border-md);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      color: var(--text);
+      resize: vertical;
+      line-height: 1.5;
+    }
+    .paste-section textarea:focus { outline: none; border-color: var(--accent); }
+    .paste-btn {
+      margin-top: 10px; height: 36px; padding: 0 18px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-md);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .paste-btn:hover { background: var(--bg); }
+
+    /* ── Controls ── */
+    .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .search-wrap { position: relative; flex: 1; min-width: 220px; }
+    .search-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 17px; color: var(--hint); pointer-events: none; }
+    .search-wrap input {
+      width: 100%; height: 42px;
+      padding: 0 14px 0 40px;
+      border: 1px solid var(--border-md);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      box-shadow: var(--shadow);
+    }
+    .search-wrap input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(83,74,183,0.1); }
+    .search-wrap input::placeholder { color: var(--hint); }
+    select {
+      height: 42px; padding: 0 12px;
+      border: 1px solid var(--border-md);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+    select:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px; flex-wrap: wrap; gap: 8px;
+    }
+    .stats-text { font-size: 13px; color: var(--muted); }
+    .last-updated { font-size: 12px; color: var(--hint); }
+    .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; background: var(--hint); vertical-align: middle; }
+    .dot.live { background: #639922; }
+    .dot.err  { background: #E24B4A; }
+
+    /* ── Grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 14px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .card:hover { border-color: var(--border-md); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .card-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 15px; flex-shrink: 0;
+    }
+    .card-name { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.3; }
+    .card-title { font-size: 13px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+    .badge-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+    .badge {
+      font-size: 11px; font-weight: 500;
+      padding: 3px 10px; border-radius: 20px;
+      white-space: nowrap;
+    }
+    .badge-source  { background: var(--green-bg);  color: var(--green-fg); }
+    .badge-status  { background: var(--accent-bg); color: var(--accent-fg); }
+    .badge-type    { background: var(--blue-bg);   color: var(--blue-fg); }
+    .badge-rate    { background: var(--amber-bg);  color: var(--amber-fg); }
+    .stars { color: #EF9F27; font-size: 13px; margin-top: 6px; letter-spacing: 1px; }
+    .divider { border-top: 1px solid var(--border); margin: 12px 0; }
+    .info-row {
+      font-size: 13px; color: var(--muted);
+      display: flex; align-items: flex-start; gap: 8px;
+      margin-bottom: 7px; line-height: 1.4;
+    }
+    .info-row i { font-size: 15px; flex-shrink: 0; margin-top: 1px; color: var(--hint); }
+    .info-row a { color: var(--accent); text-decoration: none; }
+    .info-row a:hover { text-decoration: underline; }
+    .notes-box {
+      font-size: 12px; color: var(--muted);
+      background: var(--bg); border-radius: var(--radius-sm);
+      padding: 8px 12px; margin-top: 10px; line-height: 1.6;
+      border-left: 2px solid var(--border-md);
+    }
+
+    /* ── Empty state ── */
+    .empty {
+      grid-column: 1 / -1;
+      text-align: center; padding: 60px 20px;
+      color: var(--hint);
+    }
+    .empty i { font-size: 48px; margin-bottom: 12px; display: block; }
+    .empty p { font-size: 14px; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #1A1A1A; color: #fff;
+      padding: 10px 20px; border-radius: var(--radius-sm);
+      font-size: 13px; opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .page { padding: 0 16px 60px; }
+      .site-header { padding: 20px 0 18px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header class="site-header">
+    <div>
+      <h1>Talent Directory</h1>
+      <p id="header-sub">Loading talent data…</p>
+    </div>
+    <button class="sync-btn" id="sync-btn" onclick="syncData()">
+      <i class="ti ti-refresh"></i> Sync sheet
+    </button>
+  </header>
+
+  <!-- Setup banner (shown when Apps Script URL not configured) -->
+  <div class="setup-banner" id="setup-banner">
+    <h3>One-time setup required</h3>
+    <ol>
+      <li>In your Google Sheet go to <strong>Extensions &gt; Apps Script</strong></li>
+      <li>Paste the contents of <code>google-apps-script.js</code> and save</li>
+      <li>Click <strong>Deploy &gt; New deployment &gt; Web app</strong></li>
+      <li>Set <em>Execute as</em>: <strong>Me</strong> — <em>Who has access</em>: <strong>Anyone</strong></li>
+      <li>Copy the Web app URL and paste it into <code>index.html</code> on the <code>APPS_SCRIPT_URL</code> line</li>
+    </ol>
+  </div>
+
+  <!-- Paste fallback -->
+  <div class="paste-section" id="paste-section">
+    <label><i class="ti ti-clipboard" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>No Apps Script URL set — paste your CSV here as a fallback</label>
+    <textarea id="csv-paste" placeholder="Open your CSV in Notepad, select all, copy, paste here…"></textarea>
+    <button class="paste-btn" onclick="loadFromPaste()">
+      <i class="ti ti-upload" style="font-size:13px;vertical-align:-1px;margin-right:4px"></i> Load from paste
+    </button>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="search-wrap">
+      <i class="ti ti-search"></i>
+      <input type="text" id="search" placeholder="Search by name, title, location, notes…" oninput="render()" />
+    </div>
+    <select id="sel-source" onchange="render()"><option value="">All sources</option></select>
+    <select id="sel-status" onchange="render()"><option value="">All statuses</option></select>
+    <select id="sel-type"   onchange="render()"><option value="">All types</option></select>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <span class="stats-text" id="stats-text"></span>
+    <span class="last-updated" id="last-updated"></span>
+  </div>
+
+  <!-- Grid -->
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─────────────────────────────────────────────
+  //  ★ PASTE YOUR APPS SCRIPT WEB APP URL HERE ★
+  //  After deploying google-apps-script.js, copy
+  //  the Web app URL and replace the empty string.
+  // ─────────────────────────────────────────────
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVrWJj23syBZMdT2kxO0gvE6_SPzpka8BKRHsnWz9Qku3BWKiNDugVpn6jzp6Md966/exec";
+
+  // ─────────────────────────────────────────────
+
+  const AVATAR_COLORS = [
+    ["#EEEDFE","#3C3489"],["#E1F5EE","#085041"],["#E6F1FB","#0C447C"],
+    ["#FAEEDA","#633806"],["#FAECE7","#712B13"],["#EAF3DE","#27500A"],
+  ];
+
+  let talents = [];
+  let lastUpdated = null;
+
+  function initials(n) {
+    return (n||"?").split(" ").map(w=>w[0]||"").join("").slice(0,2).toUpperCase();
+  }
+  function avatarColor(n) {
+    return AVATAR_COLORS[(n.charCodeAt(0)||0) % AVATAR_COLORS.length];
+  }
+  function stars(r) {
+    const n = parseInt(r)||0;
+    return n ? "★".repeat(n)+"☆".repeat(Math.max(0,5-n)) : "";
+  }
+  function toast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 2800);
+  }
+  function safeUrl(u) {
+    if (!u) return "";
+    return u.startsWith("http") ? u : "https://"+u;
+  }
+
+  function populateSelects() {
+    ["source","status","type"].forEach(key => {
+      const el = document.getElementById("sel-"+key);
+      const cur = el.value;
+      const opts = [...new Set(talents.map(t=>t[key]).filter(Boolean).map(s=>s.trim()))].sort();
+      const label = key==="source"?"sources":key==="status"?"statuses":"types";
+      el.innerHTML = `<option value="">All ${label}</option>`
+        + opts.map(o=>`<option value="${o}"${o===cur?" selected":""}>${o}</option>`).join("");
+    });
+  }
+
+  function filtered() {
+    const q  = (document.getElementById("search").value||"").toLowerCase().trim();
+    const src  = document.getElementById("sel-source").value;
+    const stat = document.getElementById("sel-status").value;
+    const typ  = document.getElementById("sel-type").value;
+    return talents.filter(t => {
+      const blob = [t.name,t.title,t.location,t.source,t.type,t.notes,t.referred].join(" ").toLowerCase();
+      return (!q||blob.includes(q)) && (!src||t.source===src) && (!stat||t.status===stat) && (!typ||t.type===typ);
+    });
+  }
+
+  function render() {
+    populateSelects();
+    const data = filtered();
+    document.getElementById("stats-text").innerHTML =
+      `<span class="dot ${talents.length ? 'live' : ''}"></span>Showing <strong>${data.length}</strong> of <strong>${talents.length}</strong> talents`;
+
+    if (lastUpdated) {
+      document.getElementById("last-updated").textContent =
+        "Last synced: " + new Date(lastUpdated).toLocaleString();
+    }
+
+    const grid = document.getElementById("grid");
+    if (!data.length) {
+      grid.innerHTML = `<div class="empty"><i class="ti ti-mood-empty"></i><p>No talents match your search.</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = data.map(t => {
+      const [bg,fg] = avatarColor(t.name);
+      const profileLink  = t.profile  ? `<div class="info-row"><i class="ti ti-external-link"></i><a href="${safeUrl(t.profile)}" target="_blank" rel="noopener">View profile</a></div>` : "";
+      const linkedinLink = t.linkedin ? `<div class="info-row"><i class="ti ti-brand-linkedin"></i><a href="${safeUrl(t.linkedin)}" target="_blank" rel="noopener">LinkedIn</a></div>` : "";
+      const emailRow     = t.email    ? `<div class="info-row"><i class="ti ti-mail"></i><a href="mailto:${t.email}">${t.email}</a></div>` : "";
+      const locationRow  = t.location ? `<div class="info-row"><i class="ti ti-map-pin"></i><span>${t.location}</span></div>` : "";
+      const referredRow  = t.referred ? `<div class="info-row"><i class="ti ti-users"></i><span>Referred by ${t.referred}</span></div>` : "";
+      const notesBlock   = t.notes    ? `<div class="notes-box">${t.notes}</div>` : "";
+      const starsStr     = stars(t.rating);
+      return `
+      <div class="card">
+        <div class="card-top">
+          <div class="avatar" style="background:${bg};color:${fg}">${initials(t.name)}</div>
+          <div style="flex:1;min-width:0">
+            <div class="card-name">${t.name}</div>
+            <div class="card-title">${t.title||""}</div>
+            <div class="badge-row">
+              ${t.source   ? `<span class="badge badge-source">${t.source}</span>`  : ""}
+              ${t.status   ? `<span class="badge badge-status">${t.status}</span>`  : ""}
+              ${t.type     ? `<span class="badge badge-type">${t.type}</span>`      : ""}
+              ${t.rate     ? `<span class="badge badge-rate">${t.rate}</span>`      : ""}
+            </div>
+            ${starsStr ? `<div class="stars">${starsStr}</div>` : ""}
+          </div>
+        </div>
+        <div class="divider"></div>
+        ${locationRow}${profileLink}${linkedinLink}${emailRow}${referredRow}${notesBlock}
+      </div>`;
+    }).join("");
+  }
+
+  // ── Apps Script fetch ──
+  async function syncData() {
+    if (!APPS_SCRIPT_URL) return;
+    const btn = document.getElementById("sync-btn");
+    btn.classList.add("spinning");
+    try {
+      const res = await fetch(APPS_SCRIPT_URL);
+      if (!res.ok) throw new Error("HTTP "+res.status);
+      const json = await res.json();
+      if (json.error) throw new Error(json.error);
+      talents = json.talents || [];
+      lastUpdated = json.updatedAt;
+      document.getElementById("header-sub").textContent = `${talents.length} talents · live from Google Sheets`;
+      render();
+      toast(`✓ Synced ${talents.length} talents`);
+    } catch(e) {
+      toast("Sync failed — check your Apps Script URL");
+      console.error(e);
+    } finally {
+      btn.classList.remove("spinning");
+    }
+  }
+
+  // ── CSV paste fallback ──
+  function splitLine(line) {
+    const vals=[]; let cur="", inQ=false;
+    for (const ch of line) {
+      if (ch==='"') inQ=!inQ;
+      else if (ch==="," && !inQ) { vals.push(cur); cur=""; }
+      else cur+=ch;
+    }
+    vals.push(cur);
+    return vals.map(v=>v.trim().replace(/^"|"$/g,""));
+  }
+
+  function parseCSV(text) {
+    const lines = text.trim().split(/\r?\n/).filter(l=>l.trim());
+    if (lines.length < 2) return [];
+    const headers = splitLine(lines[0]);
+    const keyMap = {
+      "talent name":"name","name":"name","location":"location",
+      "source":"source","profile":"profile","rate":"rate","title":"title",
+      "status":"status","linkedin":"linkedin","email":"email",
+      "referred":"referred","notes":"notes","type":"type",
+      "rating (1-5)":"rating","rating":"rating"
+    };
+    const colMap = {};
+    headers.forEach((h,i) => {
+      const key = keyMap[h.toLowerCase().trim()];
+      if (key) colMap[key] = i;
+    });
+    return lines.slice(1).map(line => {
+      const v = splitLine(line);
+      const t = {};
+      Object.entries(colMap).forEach(([k,i]) => t[k]=(v[i]||"").trim());
+      return t;
+    }).filter(t => t.name && t.name.trim());
+  }
+
+  function loadFromPaste() {
+    const text = (document.getElementById("csv-paste").value||"").trim();
+    if (!text) { toast("Please paste your CSV content first"); return; }
+    const parsed = parseCSV(text);
+    if (!parsed.length) { toast("Could not parse CSV — copy the full file content"); return; }
+    talents = parsed;
+    lastUpdated = new Date().toISOString();
+    document.getElementById("header-sub").textContent = `${talents.length} talents · loaded from CSV paste`;
+    document.getElementById("paste-section").classList.remove("visible");
+    render();
+    toast(`✓ ${talents.length} talents loaded`);
+  }
+
+  // ── Init ──
+  function init() {
+    if (APPS_SCRIPT_URL) {
+      document.getElementById("setup-banner").classList.remove("visible");
+      document.getElementById("paste-section").classList.remove("visible");
+      syncData();
+      // Auto-refresh every 5 minutes
+      setInterval(syncData, 5 * 60 * 1000);
+    } else {
+      document.getElementById("setup-banner").classList.add("visible");
+      document.getElementById("paste-section").classList.add("visible");
+      document.getElementById("header-sub").textContent = "Setup required — see instructions above";
+      document.getElementById("stats-text").innerHTML = `<span class="dot"></span>No data loaded`;
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
