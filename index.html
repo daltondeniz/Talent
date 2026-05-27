@@ -145,11 +145,47 @@
   let talents = [];
   let lastUpdated = null;
   const enrichCache = {};
+  const FIELD_ALIASES = {
+    name: ["name", "talent", "full name"],
+    title: ["title", "role", "job title", "headline"],
+    profile: ["profile", "profile url", "profile link", "profile_url", "profilelink", "url", "website", "portfolio", "portfolio url", "portfolio link", "talent profile"],
+    linkedin: ["linkedin", "linkedin url", "linkedin link", "linked in"],
+    email: ["email", "email address"],
+    location: ["location", "city", "country"],
+    referred: ["referred", "referred by", "referrer"],
+    notes: ["notes", "note", "comments", "comment"],
+    source: ["source", "platform"],
+    status: ["status"],
+    type: ["type", "talent type"],
+    rate: ["rate", "hourly rate", "price"],
+    rating: ["rating", "stars"]
+  };
 
   function initials(n) { return (n||"?").split(" ").map(w=>w[0]||"").join("").slice(0,2).toUpperCase(); }
   function avatarColor(n) { return AVATAR_COLORS[(n.charCodeAt(0)||0) % AVATAR_COLORS.length]; }
   function stars(r) { const n=parseInt(r)||0; return n?"★".repeat(n)+"☆".repeat(Math.max(0,5-n)):""; }
   function safeUrl(u) { if(!u)return""; return u.startsWith("http")?u:"https://"+u; }
+  function normalizeKey(k) { return String(k||"").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+  function pickField(row, aliases) {
+    const lookup = Object.keys(row||{}).reduce((acc, key) => {
+      acc[normalizeKey(key)] = key;
+      return acc;
+    }, {});
+
+    for (const alias of aliases) {
+      const key = lookup[normalizeKey(alias)];
+      const value = key ? row[key] : row[alias];
+      if (value !== undefined && value !== null && String(value).trim()) return String(value).trim();
+    }
+    return "";
+  }
+  function normalizeTalent(row) {
+    const normalized = { ...row };
+    Object.entries(FIELD_ALIASES).forEach(([field, aliases]) => {
+      normalized[field] = normalized[field] || pickField(row, aliases);
+    });
+    return normalized;
+  }
   function toast(msg) {
     const el=document.getElementById("toast");
     el.textContent=msg; el.classList.add("show");
@@ -208,7 +244,7 @@
           ? enrichedPanelHTML(cached)
           : `<div class="loading-bar" id="bar-${i}"><div class="loading-bar-inner"></div></div>
              <button class="enrich-btn" id="ebtn-${i}" onclick="enrichTalent(${i})">
-               <i class="ti ti-sparkles" aria-hidden="true"></i> Enrich profile with AI
+               <i class="ti ti-sparkles" aria-hidden="true"></i> Enrich profile
              </button>
              <div id="epanel-${i}"></div>`)
       : "";
@@ -232,6 +268,51 @@
       ${locationRow}${profileLink}${linkedinLink}${emailRow}${referredRow}${notesBlock}
       ${enrichSection}
     </div>`;
+  }
+
+  function cleanProfileText(html) {
+    return String(html||"")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function extractProfileDetails(t, html) {
+    const text = cleanProfileText(html);
+    const lower = text.toLowerCase();
+    const skillWords = [
+      "javascript", "typescript", "react", "vue", "angular", "node", "python", "django", "flask",
+      "wordpress", "shopify", "webflow", "figma", "photoshop", "illustrator", "after effects",
+      "seo", "copywriting", "content", "marketing", "email marketing", "social media",
+      "analytics", "google ads", "meta ads", "video editing", "motion graphics", "ui", "ux",
+      "product design", "graphic design", "branding", "salesforce", "hubspot", "automation",
+      "zapier", "make", "airtable", "notion", "excel", "data analysis", "sql"
+    ];
+    const skills = skillWords.filter(skill => lower.includes(skill)).slice(0, 8)
+      .map(skill => skill.replace(/\b\w/g, c => c.toUpperCase()));
+    const projectMatch = text.match(/(\d[\d,]*)\s+(?:projects?|jobs?|orders?)\b/i);
+    const responseMatch = text.match(/(?:responds?|response)\s+(?:within|time)?\s*([\w\s-]{2,24})/i);
+    const badgeMatch = text.match(/\b(top rated plus|top rated|rising talent|pro verified|expert-vetted|certified)\b/i);
+    const usefulSentences = text
+      .split(/(?<=[.!?])\s+/)
+      .filter(s => s.length > 45 && s.length < 220 && !/cookie|privacy|terms|sign in|log in/i.test(s));
+    const bio = usefulSentences.slice(0, 2).join(" ") ||
+      [t.title, t.source, t.location].filter(Boolean).join(" · ") ||
+      "Profile details were found, but the page did not expose a clean public summary.";
+
+    return {
+      skills,
+      bio,
+      projects: projectMatch ? projectMatch[1] : null,
+      responseTime: responseMatch ? responseMatch[1].trim() : null,
+      badge: badgeMatch ? badgeMatch[1].replace(/\b\w/g, c => c.toUpperCase()) : null
+    };
   }
 
   function enrichedPanelHTML(data) {
@@ -273,40 +354,9 @@
 
       if (fetchJson.error || !fetchJson.html) throw new Error(fetchJson.error || "Empty page");
 
-      if (btn) btn.innerHTML='<i class="ti ti-loader" aria-hidden="true"></i> Analyzing with AI…';
+      if (btn) btn.innerHTML='<i class="ti ti-loader" aria-hidden="true"></i> Reading profile…';
 
-      // Step 2: send to Claude API to extract structured info
-      const prompt = `You are analyzing a freelance talent profile page. Extract key information and return ONLY valid JSON with no markdown or extra text.
-
-Talent name: ${t.name}
-Profile URL: ${t.profile}
-Platform: ${t.source}
-
-Page content (first 15000 chars):
-${fetchJson.html.replace(/<[^>]+>/g," ").replace(/\s+/g," ").substring(0,15000)}
-
-Return JSON in exactly this format:
-{
-  "skills": ["skill1", "skill2", "skill3"],
-  "bio": "2-3 sentence summary of who they are and what they do",
-  "projects": "number or null",
-  "responseTime": "e.g. 1 day or null",
-  "badge": "any certification or top badge or null"
-}`;
-
-      const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{ role: "user", content: prompt }]
-        })
-      });
-
-      const aiJson = await aiRes.json();
-      const raw = aiJson.content[0].text.replace(/```json|```/g,"").trim();
-      const enriched = JSON.parse(raw);
+      const enriched = extractProfileDetails(t, fetchJson.html);
 
       // Cache and display
       const cacheKey = t.profile || t.name;
@@ -317,7 +367,7 @@ Return JSON in exactly this format:
       if (panel) panel.innerHTML = enrichedPanelHTML(enriched);
 
     } catch(err) {
-      if (btn) { btn.classList.remove("loading"); btn.innerHTML='<i class="ti ti-sparkles" aria-hidden="true"></i> Enrich profile with AI'; }
+      if (btn) { btn.classList.remove("loading"); btn.innerHTML='<i class="ti ti-sparkles" aria-hidden="true"></i> Enrich profile'; }
       if (bar) bar.classList.remove("active");
       if (panel) panel.innerHTML = `<div class="enrich-error"><i class="ti ti-alert-circle" aria-hidden="true"></i> Could not enrich this profile. Try again later.</div>`;
       console.error(err);
@@ -332,7 +382,7 @@ Return JSON in exactly this format:
       if(!res.ok)throw new Error("HTTP "+res.status);
       const json=await res.json();
       if(json.error)throw new Error(json.error);
-      talents=json.talents||[];
+      talents=(json.talents||[]).map(normalizeTalent);
       lastUpdated=json.updatedAt;
       document.getElementById("header-sub").textContent=`${talents.length} talents · live from Google Sheets`;
       render();
