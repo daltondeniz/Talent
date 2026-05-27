@@ -5,285 +5,116 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Talent Directory</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
   <style>
-    /* ── Reset & Base ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg:        #F7F6F3;
-      --surface:   #FFFFFF;
-      --border:    rgba(0,0,0,0.08);
-      --border-md: rgba(0,0,0,0.14);
-      --text:      #1A1A1A;
-      --muted:     #6B6B6B;
-      --hint:      #9B9B9B;
-      --accent:    #534AB7;
-      --accent-bg: #EEEDFE;
-      --accent-fg: #3C3489;
-      --green-bg:  #E1F5EE;
-      --green-fg:  #085041;
-      --blue-bg:   #E6F1FB;
-      --blue-fg:   #0C447C;
-      --amber-bg:  #FAEEDA;
-      --amber-fg:  #633806;
-      --coral-bg:  #FAECE7;
-      --coral-fg:  #712B13;
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-      --shadow:    0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --bg: #F7F6F3; --surface: #FFFFFF; --border: rgba(0,0,0,0.08);
+      --border-md: rgba(0,0,0,0.14); --text: #1A1A1A; --muted: #6B6B6B;
+      --hint: #9B9B9B; --accent: #534AB7; --accent-bg: #EEEDFE; --accent-fg: #3C3489;
+      --green-bg: #E1F5EE; --green-fg: #085041; --blue-bg: #E6F1FB; --blue-fg: #0C447C;
+      --amber-bg: #FAEEDA; --amber-fg: #633806; --radius-sm: 8px;
+      --radius-md: 12px; --radius-lg: 16px; --shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
-    body {
-      font-family: 'DM Sans', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      font-size: 15px;
-      line-height: 1.6;
-    }
-
-    /* ── Layout ── */
+    body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; line-height: 1.6; }
     .page { max-width: 1200px; margin: 0 auto; padding: 0 24px 80px; }
 
-    /* ── Header ── */
-    .site-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 28px 0 24px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 32px;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
+    .site-header { display: flex; align-items: center; justify-content: space-between; padding: 28px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 32px; flex-wrap: wrap; gap: 12px; }
     .site-header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
     .site-header p { font-size: 14px; color: var(--muted); margin-top: 2px; }
-    .sync-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 8px 16px;
-      background: var(--surface);
-      border: 1px solid var(--border-md);
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-family: inherit;
-      color: var(--text);
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .sync-btn:hover { background: var(--bg); }
-    .sync-btn i { font-size: 15px; }
-    .sync-btn.spinning i { animation: spin 1s linear infinite; }
+    .header-actions { display: flex; gap: 8px; }
+    .btn { display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; color: var(--text); cursor: pointer; transition: background 0.15s; }
+    .btn:hover { background: var(--bg); }
+    .btn i { font-size: 15px; }
+    .btn.spinning i { animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Setup banner ── */
-    .setup-banner {
-      background: var(--blue-bg);
-      border: 1px solid rgba(55,138,221,0.2);
-      border-radius: var(--radius-md);
-      padding: 16px 20px;
-      margin-bottom: 24px;
-      display: none;
-    }
-    .setup-banner.visible { display: block; }
-    .setup-banner h3 { font-size: 14px; font-weight: 600; color: var(--blue-fg); margin-bottom: 6px; }
-    .setup-banner ol { font-size: 13px; color: var(--blue-fg); padding-left: 18px; line-height: 1.9; }
-    .setup-banner code { font-family: 'DM Mono', monospace; background: rgba(12,68,124,0.1); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
-    .setup-banner a { color: var(--accent); }
-
-    /* ── Paste fallback ── */
-    .paste-section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 20px;
-      margin-bottom: 24px;
-      display: none;
-    }
-    .paste-section.visible { display: block; }
-    .paste-section label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 8px; }
-    .paste-section textarea {
-      width: 100%; height: 100px;
-      font-size: 12px; font-family: 'DM Mono', monospace;
-      padding: 10px 12px;
-      border: 1px solid var(--border-md);
-      border-radius: var(--radius-sm);
-      background: var(--bg);
-      color: var(--text);
-      resize: vertical;
-      line-height: 1.5;
-    }
-    .paste-section textarea:focus { outline: none; border-color: var(--accent); }
-    .paste-btn {
-      margin-top: 10px; height: 36px; padding: 0 18px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border-md);
-      background: var(--surface);
-      color: var(--text);
-      font-size: 13px;
-      font-family: inherit;
-      cursor: pointer;
-    }
-    .paste-btn:hover { background: var(--bg); }
-
-    /* ── Controls ── */
     .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
     .search-wrap { position: relative; flex: 1; min-width: 220px; }
     .search-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 17px; color: var(--hint); pointer-events: none; }
-    .search-wrap input {
-      width: 100%; height: 42px;
-      padding: 0 14px 0 40px;
-      border: 1px solid var(--border-md);
-      border-radius: var(--radius-sm);
-      background: var(--surface);
-      color: var(--text);
-      font-size: 14px;
-      font-family: inherit;
-      box-shadow: var(--shadow);
-    }
+    .search-wrap input { width: 100%; height: 42px; padding: 0 14px 0 40px; border: 1px solid var(--border-md); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 14px; font-family: inherit; box-shadow: var(--shadow); }
     .search-wrap input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(83,74,183,0.1); }
     .search-wrap input::placeholder { color: var(--hint); }
-    select {
-      height: 42px; padding: 0 12px;
-      border: 1px solid var(--border-md);
-      border-radius: var(--radius-sm);
-      background: var(--surface);
-      color: var(--text);
-      font-size: 13px;
-      font-family: inherit;
-      cursor: pointer;
-      box-shadow: var(--shadow);
-    }
-    select:focus { outline: none; border-color: var(--accent); }
+    select { height: 42px; padding: 0 12px; border: 1px solid var(--border-md); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 13px; font-family: inherit; cursor: pointer; box-shadow: var(--shadow); }
 
-    /* ── Stats row ── */
-    .stats-row {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 20px; flex-wrap: wrap; gap: 8px;
-    }
+    .stats-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
     .stats-text { font-size: 13px; color: var(--muted); }
     .last-updated { font-size: 12px; color: var(--hint); }
     .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; background: var(--hint); vertical-align: middle; }
-    .dot.live { background: #639922; }
-    .dot.err  { background: #E24B4A; }
+    .dot.live { background: #639922; } .dot.err { background: #E24B4A; }
 
-    /* ── Grid ── */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 14px;
-    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
 
-    /* ── Card ── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 18px 20px;
-      box-shadow: var(--shadow);
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px 20px; box-shadow: var(--shadow); transition: border-color 0.15s, box-shadow 0.15s; }
     .card:hover { border-color: var(--border-md); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     .card-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
-    .avatar {
-      width: 44px; height: 44px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 600; font-size: 15px; flex-shrink: 0;
-    }
+    .avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; flex-shrink: 0; }
     .card-name { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.3; }
     .card-title { font-size: 13px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
     .badge-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
-    .badge {
-      font-size: 11px; font-weight: 500;
-      padding: 3px 10px; border-radius: 20px;
-      white-space: nowrap;
-    }
-    .badge-source  { background: var(--green-bg);  color: var(--green-fg); }
-    .badge-status  { background: var(--accent-bg); color: var(--accent-fg); }
-    .badge-type    { background: var(--blue-bg);   color: var(--blue-fg); }
-    .badge-rate    { background: var(--amber-bg);  color: var(--amber-fg); }
+    .badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+    .badge-source { background: var(--green-bg); color: var(--green-fg); }
+    .badge-status { background: var(--accent-bg); color: var(--accent-fg); }
+    .badge-type   { background: var(--blue-bg);   color: var(--blue-fg); }
+    .badge-rate   { background: var(--amber-bg);  color: var(--amber-fg); }
     .stars { color: #EF9F27; font-size: 13px; margin-top: 6px; letter-spacing: 1px; }
     .divider { border-top: 1px solid var(--border); margin: 12px 0; }
-    .info-row {
-      font-size: 13px; color: var(--muted);
-      display: flex; align-items: flex-start; gap: 8px;
-      margin-bottom: 7px; line-height: 1.4;
-    }
+    .info-row { font-size: 13px; color: var(--muted); display: flex; align-items: flex-start; gap: 8px; margin-bottom: 7px; line-height: 1.4; }
     .info-row i { font-size: 15px; flex-shrink: 0; margin-top: 1px; color: var(--hint); }
     .info-row a { color: var(--accent); text-decoration: none; }
     .info-row a:hover { text-decoration: underline; }
-    .notes-box {
-      font-size: 12px; color: var(--muted);
-      background: var(--bg); border-radius: var(--radius-sm);
-      padding: 8px 12px; margin-top: 10px; line-height: 1.6;
-      border-left: 2px solid var(--border-md);
-    }
+    .notes-box { font-size: 12px; color: var(--muted); background: var(--bg); border-radius: var(--radius-sm); padding: 8px 12px; margin-top: 10px; line-height: 1.6; border-left: 2px solid var(--border-md); }
 
-    /* ── Empty state ── */
-    .empty {
-      grid-column: 1 / -1;
-      text-align: center; padding: 60px 20px;
-      color: var(--hint);
-    }
+    /* Enrich button */
+    .enrich-btn { width: 100%; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 0; border-radius: var(--radius-sm); border: 1px dashed var(--border-md); background: transparent; color: var(--muted); font-size: 13px; font-family: inherit; cursor: pointer; transition: all 0.15s; }
+    .enrich-btn:hover { background: var(--accent-bg); color: var(--accent-fg); border-color: #AFA9EC; border-style: solid; }
+    .enrich-btn i { font-size: 15px; }
+    .enrich-btn.loading { opacity: 0.6; cursor: not-allowed; pointer-events: none; }
+    .enrich-btn.loading i { animation: spin 1s linear infinite; }
+
+    /* Enriched panel */
+    .enriched-panel { margin-top: 12px; background: var(--bg); border-radius: var(--radius-sm); padding: 12px 14px; border: 1px solid var(--border); }
+    .panel-label { font-size: 11px; font-weight: 500; color: var(--hint); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 7px; }
+    .skill-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+    .skill-tag { font-size: 11px; padding: 3px 10px; border-radius: 12px; background: var(--blue-bg); color: var(--blue-fg); }
+    .bio-text { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+    .meta-row { display: flex; gap: 14px; flex-wrap: wrap; }
+    .meta-item { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+    .meta-item i { font-size: 14px; }
+    .meta-item strong { color: var(--text); font-weight: 500; }
+    .enrich-error { font-size: 12px; color: #A32D2D; margin-top: 8px; }
+
+    /* Loading bar */
+    .loading-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 10px; display: none; }
+    .loading-bar.active { display: block; }
+    .loading-bar-inner { height: 100%; width: 40%; background: var(--accent); border-radius: 2px; animation: slide 1.4s ease-in-out infinite; }
+    @keyframes slide { 0%{margin-left:-40%} 100%{margin-left:140%} }
+
+    .empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--hint); }
     .empty i { font-size: 48px; margin-bottom: 12px; display: block; }
     .empty p { font-size: 14px; }
 
-    /* ── Toast ── */
-    .toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-      background: #1A1A1A; color: #fff;
-      padding: 10px 20px; border-radius: var(--radius-sm);
-      font-size: 13px; opacity: 0; pointer-events: none;
-      transition: opacity 0.2s;
-      z-index: 999;
-      white-space: nowrap;
-    }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1A1A1A; color: #fff; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 999; white-space: nowrap; }
     .toast.show { opacity: 1; }
 
-    /* ── Responsive ── */
-    @media (max-width: 600px) {
-      .page { padding: 0 16px 60px; }
-      .site-header { padding: 20px 0 18px; }
-      .grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 600px) { .page { padding: 0 16px 60px; } .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
 <div class="page">
-
-  <!-- Header -->
   <header class="site-header">
     <div>
       <h1>Talent Directory</h1>
-      <p id="header-sub">Loading talent data…</p>
+      <p id="header-sub">Loading…</p>
     </div>
-    <button class="sync-btn" id="sync-btn" onclick="syncData()">
-      <i class="ti ti-refresh"></i> Sync sheet
-    </button>
+    <div class="header-actions">
+      <button class="btn" id="sync-btn" onclick="syncData()">
+        <i class="ti ti-refresh"></i> Sync sheet
+      </button>
+    </div>
   </header>
 
-  <!-- Setup banner (shown when Apps Script URL not configured) -->
-  <div class="setup-banner" id="setup-banner">
-    <h3>One-time setup required</h3>
-    <ol>
-      <li>In your Google Sheet go to <strong>Extensions &gt; Apps Script</strong></li>
-      <li>Paste the contents of <code>google-apps-script.js</code> and save</li>
-      <li>Click <strong>Deploy &gt; New deployment &gt; Web app</strong></li>
-      <li>Set <em>Execute as</em>: <strong>Me</strong> — <em>Who has access</em>: <strong>Anyone</strong></li>
-      <li>Copy the Web app URL and paste it into <code>index.html</code> on the <code>APPS_SCRIPT_URL</code> line</li>
-    </ol>
-  </div>
-
-  <!-- Paste fallback -->
-  <div class="paste-section" id="paste-section">
-    <label><i class="ti ti-clipboard" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>No Apps Script URL set — paste your CSV here as a fallback</label>
-    <textarea id="csv-paste" placeholder="Open your CSV in Notepad, select all, copy, paste here…"></textarea>
-    <button class="paste-btn" onclick="loadFromPaste()">
-      <i class="ti ti-upload" style="font-size:13px;vertical-align:-1px;margin-right:4px"></i> Load from paste
-    </button>
-  </div>
-
-  <!-- Controls -->
   <div class="controls">
     <div class="search-wrap">
       <i class="ti ti-search"></i>
@@ -294,27 +125,17 @@
     <select id="sel-type"   onchange="render()"><option value="">All types</option></select>
   </div>
 
-  <!-- Stats -->
   <div class="stats-row">
     <span class="stats-text" id="stats-text"></span>
     <span class="last-updated" id="last-updated"></span>
   </div>
 
-  <!-- Grid -->
   <div class="grid" id="grid"></div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
-  // ─────────────────────────────────────────────
-  //  ★ PASTE YOUR APPS SCRIPT WEB APP URL HERE ★
-  //  After deploying google-apps-script.js, copy
-  //  the Web app URL and replace the empty string.
-  // ─────────────────────────────────────────────
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVrWJj23syBZMdT2kxO0gvE6_SPzpka8BKRHsnWz9Qku3BWKiNDugVpn6jzp6Md966/exec";
-
-  // ─────────────────────────────────────────────
 
   const AVATAR_COLORS = [
     ["#EEEDFE","#3C3489"],["#E1F5EE","#085041"],["#E6F1FB","#0C447C"],
@@ -323,184 +144,211 @@
 
   let talents = [];
   let lastUpdated = null;
+  const enrichCache = {};
 
-  function initials(n) {
-    return (n||"?").split(" ").map(w=>w[0]||"").join("").slice(0,2).toUpperCase();
-  }
-  function avatarColor(n) {
-    return AVATAR_COLORS[(n.charCodeAt(0)||0) % AVATAR_COLORS.length];
-  }
-  function stars(r) {
-    const n = parseInt(r)||0;
-    return n ? "★".repeat(n)+"☆".repeat(Math.max(0,5-n)) : "";
-  }
+  function initials(n) { return (n||"?").split(" ").map(w=>w[0]||"").join("").slice(0,2).toUpperCase(); }
+  function avatarColor(n) { return AVATAR_COLORS[(n.charCodeAt(0)||0) % AVATAR_COLORS.length]; }
+  function stars(r) { const n=parseInt(r)||0; return n?"★".repeat(n)+"☆".repeat(Math.max(0,5-n)):""; }
+  function safeUrl(u) { if(!u)return""; return u.startsWith("http")?u:"https://"+u; }
   function toast(msg) {
-    const el = document.getElementById("toast");
-    el.textContent = msg;
-    el.classList.add("show");
-    setTimeout(() => el.classList.remove("show"), 2800);
-  }
-  function safeUrl(u) {
-    if (!u) return "";
-    return u.startsWith("http") ? u : "https://"+u;
+    const el=document.getElementById("toast");
+    el.textContent=msg; el.classList.add("show");
+    setTimeout(()=>el.classList.remove("show"),2800);
   }
 
   function populateSelects() {
-    ["source","status","type"].forEach(key => {
-      const el = document.getElementById("sel-"+key);
-      const cur = el.value;
-      const opts = [...new Set(talents.map(t=>t[key]).filter(Boolean).map(s=>s.trim()))].sort();
-      const label = key==="source"?"sources":key==="status"?"statuses":"types";
-      el.innerHTML = `<option value="">All ${label}</option>`
-        + opts.map(o=>`<option value="${o}"${o===cur?" selected":""}>${o}</option>`).join("");
+    ["source","status","type"].forEach(key=>{
+      const el=document.getElementById("sel-"+key);
+      const cur=el.value;
+      const opts=[...new Set(talents.map(t=>t[key]).filter(Boolean).map(s=>s.trim()))].sort();
+      const label=key==="source"?"sources":key==="status"?"statuses":"types";
+      el.innerHTML=`<option value="">All ${label}</option>`+opts.map(o=>`<option value="${o}"${o===cur?" selected":""}>${o}</option>`).join("");
     });
   }
 
   function filtered() {
-    const q  = (document.getElementById("search").value||"").toLowerCase().trim();
-    const src  = document.getElementById("sel-source").value;
-    const stat = document.getElementById("sel-status").value;
-    const typ  = document.getElementById("sel-type").value;
-    return talents.filter(t => {
-      const blob = [t.name,t.title,t.location,t.source,t.type,t.notes,t.referred].join(" ").toLowerCase();
-      return (!q||blob.includes(q)) && (!src||t.source===src) && (!stat||t.status===stat) && (!typ||t.type===typ);
+    const q=(document.getElementById("search").value||"").toLowerCase().trim();
+    const src=document.getElementById("sel-source").value;
+    const stat=document.getElementById("sel-status").value;
+    const typ=document.getElementById("sel-type").value;
+    return talents.filter(t=>{
+      const blob=[t.name,t.title,t.location,t.source,t.type,t.notes,t.referred].join(" ").toLowerCase();
+      return(!q||blob.includes(q))&&(!src||t.source===src)&&(!stat||t.status===stat)&&(!typ||t.type===typ);
     });
   }
 
   function render() {
     populateSelects();
-    const data = filtered();
-    document.getElementById("stats-text").innerHTML =
-      `<span class="dot ${talents.length ? 'live' : ''}"></span>Showing <strong>${data.length}</strong> of <strong>${talents.length}</strong> talents`;
+    const data=filtered();
+    document.getElementById("stats-text").innerHTML=
+      `<span class="dot ${talents.length?'live':''}"></span>Showing <strong>${data.length}</strong> of <strong>${talents.length}</strong> talents`;
+    if(lastUpdated) document.getElementById("last-updated").textContent="Last synced: "+new Date(lastUpdated).toLocaleString();
 
-    if (lastUpdated) {
-      document.getElementById("last-updated").textContent =
-        "Last synced: " + new Date(lastUpdated).toLocaleString();
-    }
-
-    const grid = document.getElementById("grid");
-    if (!data.length) {
-      grid.innerHTML = `<div class="empty"><i class="ti ti-mood-empty"></i><p>No talents match your search.</p></div>`;
+    const grid=document.getElementById("grid");
+    if(!data.length){
+      grid.innerHTML=`<div class="empty"><i class="ti ti-mood-empty"></i><p>No talents match your search.</p></div>`;
       return;
     }
-
-    grid.innerHTML = data.map(t => {
-      const [bg,fg] = avatarColor(t.name);
-      const profileLink  = t.profile  ? `<div class="info-row"><i class="ti ti-external-link"></i><a href="${safeUrl(t.profile)}" target="_blank" rel="noopener">View profile</a></div>` : "";
-      const linkedinLink = t.linkedin ? `<div class="info-row"><i class="ti ti-brand-linkedin"></i><a href="${safeUrl(t.linkedin)}" target="_blank" rel="noopener">LinkedIn</a></div>` : "";
-      const emailRow     = t.email    ? `<div class="info-row"><i class="ti ti-mail"></i><a href="mailto:${t.email}">${t.email}</a></div>` : "";
-      const locationRow  = t.location ? `<div class="info-row"><i class="ti ti-map-pin"></i><span>${t.location}</span></div>` : "";
-      const referredRow  = t.referred ? `<div class="info-row"><i class="ti ti-users"></i><span>Referred by ${t.referred}</span></div>` : "";
-      const notesBlock   = t.notes    ? `<div class="notes-box">${t.notes}</div>` : "";
-      const starsStr     = stars(t.rating);
-      return `
-      <div class="card">
-        <div class="card-top">
-          <div class="avatar" style="background:${bg};color:${fg}">${initials(t.name)}</div>
-          <div style="flex:1;min-width:0">
-            <div class="card-name">${t.name}</div>
-            <div class="card-title">${t.title||""}</div>
-            <div class="badge-row">
-              ${t.source   ? `<span class="badge badge-source">${t.source}</span>`  : ""}
-              ${t.status   ? `<span class="badge badge-status">${t.status}</span>`  : ""}
-              ${t.type     ? `<span class="badge badge-type">${t.type}</span>`      : ""}
-              ${t.rate     ? `<span class="badge badge-rate">${t.rate}</span>`      : ""}
-            </div>
-            ${starsStr ? `<div class="stars">${starsStr}</div>` : ""}
-          </div>
-        </div>
-        <div class="divider"></div>
-        ${locationRow}${profileLink}${linkedinLink}${emailRow}${referredRow}${notesBlock}
-      </div>`;
-    }).join("");
+    grid.innerHTML=data.map((t,i)=>cardHTML(t,i)).join("");
   }
 
-  // ── Apps Script fetch ──
+  function cardHTML(t, i) {
+    const [bg,fg]=avatarColor(t.name);
+    const profileLink=t.profile?`<div class="info-row"><i class="ti ti-external-link" aria-hidden="true"></i><a href="${safeUrl(t.profile)}" target="_blank" rel="noopener">View profile</a></div>`:"";
+    const linkedinLink=t.linkedin?`<div class="info-row"><i class="ti ti-brand-linkedin" aria-hidden="true"></i><a href="${safeUrl(t.linkedin)}" target="_blank" rel="noopener">LinkedIn</a></div>`:"";
+    const emailRow=t.email?`<div class="info-row"><i class="ti ti-mail" aria-hidden="true"></i><a href="mailto:${t.email}">${t.email}</a></div>`:"";
+    const locationRow=t.location?`<div class="info-row"><i class="ti ti-map-pin" aria-hidden="true"></i><span>${t.location}</span></div>`:"";
+    const referredRow=t.referred?`<div class="info-row"><i class="ti ti-users" aria-hidden="true"></i><span>Referred by ${t.referred}</span></div>`:"";
+    const notesBlock=t.notes?`<div class="notes-box">${t.notes}</div>`:"";
+    const starsStr=stars(t.rating);
+    const cacheKey=t.profile||t.name;
+    const cached=enrichCache[cacheKey];
+    const enrichSection=t.profile
+      ? (cached
+          ? enrichedPanelHTML(cached)
+          : `<div class="loading-bar" id="bar-${i}"><div class="loading-bar-inner"></div></div>
+             <button class="enrich-btn" id="ebtn-${i}" onclick="enrichTalent(${i})">
+               <i class="ti ti-sparkles" aria-hidden="true"></i> Enrich profile with AI
+             </button>
+             <div id="epanel-${i}"></div>`)
+      : "";
+
+    return `<div class="card" id="card-${i}">
+      <div class="card-top">
+        <div class="avatar" style="background:${bg};color:${fg}">${initials(t.name)}</div>
+        <div style="flex:1;min-width:0">
+          <div class="card-name">${t.name}</div>
+          <div class="card-title">${t.title||""}</div>
+          <div class="badge-row">
+            ${t.source?`<span class="badge badge-source">${t.source}</span>`:""}
+            ${t.status?`<span class="badge badge-status">${t.status}</span>`:""}
+            ${t.type?`<span class="badge badge-type">${t.type}</span>`:""}
+            ${t.rate?`<span class="badge badge-rate">${t.rate}</span>`:""}
+          </div>
+          ${starsStr?`<div class="stars">${starsStr}</div>`:""}
+        </div>
+      </div>
+      <div class="divider"></div>
+      ${locationRow}${profileLink}${linkedinLink}${emailRow}${referredRow}${notesBlock}
+      ${enrichSection}
+    </div>`;
+  }
+
+  function enrichedPanelHTML(data) {
+    const skillTags=(data.skills||[]).map(s=>`<span class="skill-tag">${s}</span>`).join("");
+    const metaItems=[
+      data.projects?`<div class="meta-item"><i class="ti ti-briefcase" aria-hidden="true"></i><span><strong>${data.projects}</strong> projects</span></div>`:"",
+      data.responseTime?`<div class="meta-item"><i class="ti ti-clock" aria-hidden="true"></i><span><strong>${data.responseTime}</strong> response</span></div>`:"",
+      data.badge?`<div class="meta-item"><i class="ti ti-rosette" aria-hidden="true"></i><span><strong>${data.badge}</strong></span></div>`:"",
+    ].filter(Boolean).join("");
+
+    return `<div class="enriched-panel">
+      ${skillTags?`<div class="panel-label">Skills &amp; tools</div><div class="skill-tags">${skillTags}</div>`:""}
+      ${data.bio?`<div class="panel-label">About</div><div class="bio-text">${data.bio}</div>`:""}
+      ${metaItems?`<div class="panel-label">Highlights</div><div class="meta-row">${metaItems}</div>`:""}
+    </div>`;
+  }
+
+  // ── Get index of talent in current filtered list ──
+  function getTalentByIndex(i) {
+    return filtered()[i];
+  }
+
+  async function enrichTalent(i) {
+    const t = getTalentByIndex(i);
+    if (!t || !t.profile) return;
+
+    const btn = document.getElementById("ebtn-"+i);
+    const bar = document.getElementById("bar-"+i);
+    const panel = document.getElementById("epanel-"+i);
+
+    if (btn) { btn.classList.add("loading"); btn.innerHTML='<i class="ti ti-loader" aria-hidden="true"></i> Fetching profile…'; }
+    if (bar) bar.classList.add("active");
+
+    try {
+      // Step 1: fetch profile HTML via Apps Script
+      const fetchUrl = APPS_SCRIPT_URL + "?action=fetch&url=" + encodeURIComponent(safeUrl(t.profile));
+      const fetchRes = await fetch(fetchUrl);
+      const fetchJson = await fetchRes.json();
+
+      if (fetchJson.error || !fetchJson.html) throw new Error(fetchJson.error || "Empty page");
+
+      if (btn) btn.innerHTML='<i class="ti ti-loader" aria-hidden="true"></i> Analyzing with AI…';
+
+      // Step 2: send to Claude API to extract structured info
+      const prompt = `You are analyzing a freelance talent profile page. Extract key information and return ONLY valid JSON with no markdown or extra text.
+
+Talent name: ${t.name}
+Profile URL: ${t.profile}
+Platform: ${t.source}
+
+Page content (first 15000 chars):
+${fetchJson.html.replace(/<[^>]+>/g," ").replace(/\s+/g," ").substring(0,15000)}
+
+Return JSON in exactly this format:
+{
+  "skills": ["skill1", "skill2", "skill3"],
+  "bio": "2-3 sentence summary of who they are and what they do",
+  "projects": "number or null",
+  "responseTime": "e.g. 1 day or null",
+  "badge": "any certification or top badge or null"
+}`;
+
+      const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+
+      const aiJson = await aiRes.json();
+      const raw = aiJson.content[0].text.replace(/```json|```/g,"").trim();
+      const enriched = JSON.parse(raw);
+
+      // Cache and display
+      const cacheKey = t.profile || t.name;
+      enrichCache[cacheKey] = enriched;
+
+      if (btn) btn.style.display = "none";
+      if (bar) bar.classList.remove("active");
+      if (panel) panel.innerHTML = enrichedPanelHTML(enriched);
+
+    } catch(err) {
+      if (btn) { btn.classList.remove("loading"); btn.innerHTML='<i class="ti ti-sparkles" aria-hidden="true"></i> Enrich profile with AI'; }
+      if (bar) bar.classList.remove("active");
+      if (panel) panel.innerHTML = `<div class="enrich-error"><i class="ti ti-alert-circle" aria-hidden="true"></i> Could not enrich this profile. Try again later.</div>`;
+      console.error(err);
+    }
+  }
+
   async function syncData() {
-    if (!APPS_SCRIPT_URL) return;
-    const btn = document.getElementById("sync-btn");
+    const btn=document.getElementById("sync-btn");
     btn.classList.add("spinning");
     try {
-      const res = await fetch(APPS_SCRIPT_URL);
-      if (!res.ok) throw new Error("HTTP "+res.status);
-      const json = await res.json();
-      if (json.error) throw new Error(json.error);
-      talents = json.talents || [];
-      lastUpdated = json.updatedAt;
-      document.getElementById("header-sub").textContent = `${talents.length} talents · live from Google Sheets`;
+      const res=await fetch(APPS_SCRIPT_URL);
+      if(!res.ok)throw new Error("HTTP "+res.status);
+      const json=await res.json();
+      if(json.error)throw new Error(json.error);
+      talents=json.talents||[];
+      lastUpdated=json.updatedAt;
+      document.getElementById("header-sub").textContent=`${talents.length} talents · live from Google Sheets`;
       render();
       toast(`✓ Synced ${talents.length} talents`);
     } catch(e) {
       toast("Sync failed — check your Apps Script URL");
+      document.getElementById("header-sub").textContent="Sync failed";
       console.error(e);
     } finally {
       btn.classList.remove("spinning");
     }
   }
 
-  // ── CSV paste fallback ──
-  function splitLine(line) {
-    const vals=[]; let cur="", inQ=false;
-    for (const ch of line) {
-      if (ch==='"') inQ=!inQ;
-      else if (ch==="," && !inQ) { vals.push(cur); cur=""; }
-      else cur+=ch;
-    }
-    vals.push(cur);
-    return vals.map(v=>v.trim().replace(/^"|"$/g,""));
-  }
-
-  function parseCSV(text) {
-    const lines = text.trim().split(/\r?\n/).filter(l=>l.trim());
-    if (lines.length < 2) return [];
-    const headers = splitLine(lines[0]);
-    const keyMap = {
-      "talent name":"name","name":"name","location":"location",
-      "source":"source","profile":"profile","rate":"rate","title":"title",
-      "status":"status","linkedin":"linkedin","email":"email",
-      "referred":"referred","notes":"notes","type":"type",
-      "rating (1-5)":"rating","rating":"rating"
-    };
-    const colMap = {};
-    headers.forEach((h,i) => {
-      const key = keyMap[h.toLowerCase().trim()];
-      if (key) colMap[key] = i;
-    });
-    return lines.slice(1).map(line => {
-      const v = splitLine(line);
-      const t = {};
-      Object.entries(colMap).forEach(([k,i]) => t[k]=(v[i]||"").trim());
-      return t;
-    }).filter(t => t.name && t.name.trim());
-  }
-
-  function loadFromPaste() {
-    const text = (document.getElementById("csv-paste").value||"").trim();
-    if (!text) { toast("Please paste your CSV content first"); return; }
-    const parsed = parseCSV(text);
-    if (!parsed.length) { toast("Could not parse CSV — copy the full file content"); return; }
-    talents = parsed;
-    lastUpdated = new Date().toISOString();
-    document.getElementById("header-sub").textContent = `${talents.length} talents · loaded from CSV paste`;
-    document.getElementById("paste-section").classList.remove("visible");
-    render();
-    toast(`✓ ${talents.length} talents loaded`);
-  }
-
-  // ── Init ──
-  function init() {
-    if (APPS_SCRIPT_URL) {
-      document.getElementById("setup-banner").classList.remove("visible");
-      document.getElementById("paste-section").classList.remove("visible");
-      syncData();
-      // Auto-refresh every 5 minutes
-      setInterval(syncData, 5 * 60 * 1000);
-    } else {
-      document.getElementById("setup-banner").classList.add("visible");
-      document.getElementById("paste-section").classList.add("visible");
-      document.getElementById("header-sub").textContent = "Setup required — see instructions above";
-      document.getElementById("stats-text").innerHTML = `<span class="dot"></span>No data loaded`;
-    }
+  async function init() {
+    await syncData();
+    setInterval(syncData, 5 * 60 * 1000);
   }
 
   init();
