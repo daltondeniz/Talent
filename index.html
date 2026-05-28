@@ -276,7 +276,7 @@
     const emailRow=t.email?`<div class="info-row"><i class="ti ti-mail" aria-hidden="true"></i><a href="mailto:${t.email}">${t.email}</a></div>`:"";
     const locationRow=t.location?`<div class="info-row"><i class="ti ti-map-pin" aria-hidden="true"></i><span>${t.location}</span></div>`:"";
     const referredRow=t.referred?`<div class="info-row"><i class="ti ti-users" aria-hidden="true"></i><span>Referred by ${t.referred}</span></div>`:"";
-    const notesBlock=t.notes?`<div class="notes-box">${t.notes}</div>`:"";
+    const notesBlock=t.notes?`<div class="notes-box"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--hint);display:block;margin-bottom:4px">Note</span>${t.notes}</div>`:"";
     const starsStr=stars(t.rating);
 
     // Auto-extract skills from title and notes
