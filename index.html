@@ -116,16 +116,22 @@
     .info-row a:hover { text-decoration: underline; color: var(--accent); }
     .notes-box { font-size: 12px; color: var(--muted); background: var(--surface-2); border-radius: var(--radius-sm); padding: 8px 12px; margin-top: 10px; line-height: 1.6; border-left: 2px solid var(--accent); }
 
-    /* Enriched panel */
-    .enriched-panel { margin-top: 12px; background: var(--surface-2); border-radius: var(--radius-sm); padding: 12px 14px; border: 1px solid var(--border); }
-    .panel-label { font-size: 10px; font-weight: 600; color: var(--hint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; }
-    .skill-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
-    .skill-tag { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: rgba(45,21,147,0.08); color: var(--accent); font-weight: 500; border: 1px solid rgba(45,21,147,0.12); }
-    .bio-text { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
-    .meta-row { display: flex; gap: 14px; flex-wrap: wrap; }
-    .meta-item { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
-    .meta-item i { font-size: 14px; color: var(--hint); }
-    .meta-item strong { color: var(--text); font-weight: 500; }
+    /* Work sample panel */
+    .sample-panel { margin-top: 12px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); }
+    .sample-label { font-size: 10px; font-weight: 600; color: var(--hint); text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 12px 6px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+    .sample-img-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: var(--surface-2); overflow: hidden; }
+    .sample-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s ease; }
+    .sample-img-wrap:hover img { transform: scale(1.03); }
+    .sample-img-wrap a { display: block; width: 100%; height: 100%; }
+    .sample-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(24,14,112,0.6) 0%, transparent 50%); opacity: 0; transition: opacity 0.2s; display: flex; align-items: flex-end; padding: 12px; }
+    .sample-img-wrap:hover .sample-overlay { opacity: 1; }
+    .sample-overlay span { font-size: 12px; font-weight: 500; color: #fff; display: flex; align-items: center; gap: 5px; }
+    .sample-placeholder { width: 100%; aspect-ratio: 16/9; background: var(--surface-2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--hint); font-size: 12px; }
+    .sample-placeholder i { font-size: 28px; opacity: 0.4; }
+    .sample-loading { width: 100%; aspect-ratio: 16/9; background: var(--surface-2); display: flex; align-items: center; justify-content: center; }
+    .sample-loading-bar { width: 60%; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .sample-loading-bar-inner { height: 100%; background: var(--accent); border-radius: 2px; animation: slide 1.4s ease-in-out infinite; }
+    @keyframes slide { 0%{margin-left:-40%} 100%{margin-left:140%} }
 
     /* Empty */
     .empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--hint); }
@@ -267,6 +273,8 @@
       return;
     }
     grid.innerHTML=data.map((t,i)=>cardHTML(t,i)).join("");
+    // Fetch work sample images after cards are in the DOM
+    fetchImagesForVisible(data);
   }
 
   function cardHTML(t, i) {
@@ -279,9 +287,14 @@
     const notesBlock=t.notes?`<div class="notes-box"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--hint);display:block;margin-bottom:4px">Note</span>${t.notes}</div>`:"";
     const starsStr=stars(t.rating);
 
-    // Auto-extract skills from title and notes
-    const enriched = extractProfileDetails(t, "");
-    const enrichSection = enrichedPanelHTML(enriched);
+    // Work sample panel — shows loading state, image fetched after render
+    const sampleSection = t.profile ? `
+      <div class="sample-panel" id="sample-${i}">
+        <div class="sample-label"><i class="ti ti-photo" aria-hidden="true" style="font-size:11px;margin-right:4px;vertical-align:-1px"></i>Work Sample</div>
+        <div class="sample-loading">
+          <div class="sample-loading-bar"><div class="sample-loading-bar-inner"></div></div>
+        </div>
+      </div>` : "";
 
     return `<div class="card" id="card-${i}">
       <div class="card-top">
@@ -300,67 +313,60 @@
       </div>
       <div class="divider"></div>
       ${locationRow}${profileLink}${linkedinLink}${emailRow}${referredRow}${notesBlock}
-      ${enrichSection}
+      ${sampleSection}
     </div>`;
   }
 
 
 
-  function extractProfileDetails(t) {
-    // Parse skills from the title field — titles like "Expert Web Designer | Framer Certified | CRO"
-    const titleParts = (t.title||"").split(/[|,·\/]/).map(s => s.trim()).filter(s => s.length > 1 && s.length < 40);
+  // ── Fetch og:image for visible cards in batches ──
+  const imageCache = {};
 
-    // Also scan title + notes for known skill keywords
-    const searchText = [(t.title||""), (t.notes||"")].join(" ").toLowerCase();
-    const SKILL_KEYWORDS = [
-      "figma","framer","webflow","wordpress","shopify","squarespace","wix",
-      "react","vue","angular","javascript","typescript","node","python","php","html","css",
-      "ui design","ux design","ux/ui","product design","graphic design","branding","identity design",
-      "motion design","after effects","premiere","illustrator","photoshop","indesign",
-      "copywriting","content writing","seo","email marketing","social media","ads","google ads","meta ads",
-      "video editing","3d","blender","cinema 4d","unreal","unity",
-      "salesforce","hubspot","zapier","airtable","notion","excel","data analysis","sql",
-      "android","ios","flutter","swift","kotlin","react native",
-      "cro","conversion","landing page","e-commerce","saas","fintech",
-      "brand strategy","market research","positioning","user research","prototyping","wireframing",
-    ];
-    const foundKeywords = SKILL_KEYWORDS
-      .filter(k => searchText.includes(k))
-      .map(k => k.replace(/\b\w/g, c => c.toUpperCase()));
-
-    // Merge title parts + keywords, deduplicate, cap at 8
-    const allSkills = [...new Set([...titleParts, ...foundKeywords])].slice(0, 8);
-
-    // Build a bio from available fields
-    const bioParts = [];
-    if (t.title) bioParts.push(t.title);
-    if (t.location) bioParts.push(`Based in ${t.location}`);
-    if (t.source) bioParts.push(`Found on ${t.source}`);
-    if (t.notes) bioParts.push(t.notes);
-    const bio = bioParts.join(". ").replace(/\.{2,}/g, ".").trim();
-
-    return {
-      skills: allSkills,
-      bio: bio || null,
-      projects: null,
-      responseTime: null,
-      badge: null,
-    };
+  function setSamplePanel(id, imageUrl, profileUrl) {
+    const panel = document.getElementById("sample-"+id);
+    if (!panel) return;
+    if (imageUrl) {
+      panel.querySelector(".sample-loading").outerHTML = `
+        <div class="sample-img-wrap">
+          <a href="${profileUrl}" target="_blank" rel="noopener">
+            <img src="${imageUrl}" alt="Work sample" loading="lazy" onerror="this.closest('.sample-img-wrap').innerHTML='<div class=\\'sample-placeholder\\'><i class=\\'ti ti-photo-off\\'></i><span>Preview unavailable</span></div>'" />
+            <div class="sample-overlay"><span><i class="ti ti-external-link" style="font-size:13px"></i> View full profile</span></div>
+          </a>
+        </div>`;
+    } else {
+      panel.querySelector(".sample-loading").outerHTML = `
+        <div class="sample-placeholder">
+          <i class="ti ti-photo-off" aria-hidden="true"></i>
+          <span>Preview unavailable</span>
+        </div>`;
+    }
   }
 
-  function enrichedPanelHTML(data) {
-    const skillTags=(data.skills||[]).map(s=>`<span class="skill-tag">${s}</span>`).join("");
-    const metaItems=[
-      data.projects?`<div class="meta-item"><i class="ti ti-briefcase" aria-hidden="true"></i><span><strong>${data.projects}</strong> projects</span></div>`:"",
-      data.responseTime?`<div class="meta-item"><i class="ti ti-clock" aria-hidden="true"></i><span><strong>${data.responseTime}</strong> response</span></div>`:"",
-      data.badge?`<div class="meta-item"><i class="ti ti-rosette" aria-hidden="true"></i><span><strong>${data.badge}</strong></span></div>`:"",
-    ].filter(Boolean).join("");
-
-    return `<div class="enriched-panel">
-      ${skillTags?`<div class="panel-label">Skills &amp; tools</div><div class="skill-tags">${skillTags}</div>`:""}
-      ${data.bio?`<div class="panel-label">About</div><div class="bio-text">${data.bio}</div>`:""}
-      ${metaItems?`<div class="panel-label">Highlights</div><div class="meta-row">${metaItems}</div>`:""}
-    </div>`;
+  async function fetchImagesForVisible(data) {
+    // Fetch in parallel, max 6 at a time
+    const BATCH = 6;
+    for (let i = 0; i < data.length; i += BATCH) {
+      const batch = data.slice(i, i + BATCH);
+      await Promise.all(batch.map(async (t, bi) => {
+        const idx = i + bi;
+        if (!t.profile) return;
+        const cacheKey = t.profile;
+        if (imageCache[cacheKey] !== undefined) {
+          setSamplePanel(idx, imageCache[cacheKey], safeUrl(t.profile));
+          return;
+        }
+        try {
+          const url = APPS_SCRIPT_URL + "?action=ogimage&url=" + encodeURIComponent(safeUrl(t.profile));
+          const res = await fetch(url);
+          const json = await res.json();
+          imageCache[cacheKey] = json.image || null;
+          setSamplePanel(idx, imageCache[cacheKey], safeUrl(t.profile));
+        } catch {
+          imageCache[cacheKey] = null;
+          setSamplePanel(idx, null, safeUrl(t.profile));
+        }
+      }));
+    }
   }
 
   async function syncData() {
