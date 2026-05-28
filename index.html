@@ -214,6 +214,8 @@
   function avatarColor(n) { return AVATAR_COLORS[(n.charCodeAt(0)||0) % AVATAR_COLORS.length]; }
   function stars(r) { const n=parseInt(r)||0; return n?"★".repeat(n)+"☆".repeat(Math.max(0,5-n)):""; }
   function safeUrl(u) { if(!u)return""; return u.startsWith("http")?u:"https://"+u; }
+  // Take only the first URL from multiline profile fields
+  function firstUrl(u) { return (u||"").split(/[\n\r]+/)[0].trim(); }
   function normalizeKey(k) { return String(k||"").toLowerCase().replace(/[^a-z0-9]/g, ""); }
   function pickField(row, aliases) {
     const lookup = Object.keys(row||{}).reduce((acc, key) => {
@@ -281,8 +283,8 @@
 
   function cardHTML(t, i) {
     const [bg,fg]=avatarColor(t.name);
-    const profileLink=t.profile?`<div class="info-row"><i class="ti ti-external-link" aria-hidden="true"></i><a href="${safeUrl(t.profile)}" target="_blank" rel="noopener">View profile</a></div>`:"";
-    const linkedinLink=t.linkedin?`<div class="info-row"><i class="ti ti-brand-linkedin" aria-hidden="true"></i><a href="${safeUrl(t.linkedin)}" target="_blank" rel="noopener">LinkedIn</a></div>`:"";
+    const profileLink=t.profile?`<div class="info-row"><i class="ti ti-external-link" aria-hidden="true"></i><a href="${safeUrl(firstUrl(t.profile))}" target="_blank" rel="noopener">View profile</a></div>`:"";
+    const linkedinLink=t.linkedin?`<div class="info-row"><i class="ti ti-brand-linkedin" aria-hidden="true"></i><a href="${safeUrl(firstUrl(t.linkedin))}" target="_blank" rel="noopener">LinkedIn</a></div>`:"";
     const emailRow=t.email?`<div class="info-row"><i class="ti ti-mail" aria-hidden="true"></i><a href="mailto:${t.email}">${t.email}</a></div>`:"";
     const locationRow=t.location?`<div class="info-row"><i class="ti ti-map-pin" aria-hidden="true"></i><span>${t.location}</span></div>`:"";
     const referredRow=t.referred?`<div class="info-row"><i class="ti ti-users" aria-hidden="true"></i><span>Referred by ${t.referred}</span></div>`:"";
@@ -290,7 +292,7 @@
     const starsStr=stars(t.rating);
 
     // Work sample panel — shows loading state, image fetched after render
-    const sampleSection = t.profile ? `
+    const sampleSection = firstUrl(t.profile) ? `
       <div class="sample-panel" id="sample-${i}">
         <div class="sample-label"><i class="ti ti-photo" aria-hidden="true" style="font-size:11px;margin-right:4px;vertical-align:-1px"></i>Work Sample</div>
         <div class="sample-loading">
@@ -362,11 +364,11 @@
       const batch = data.slice(i, i + BATCH);
       await Promise.all(batch.map(async (t, bi) => {
         const idx = i + bi;
-        if (!t.profile) return;
-        const cacheKey = t.profile;
-        const profileUrl = safeUrl(t.profile);
+        const rawProfile = firstUrl(t.profile);
+        if (!rawProfile) return;
+        const profileUrl = safeUrl(rawProfile);
+        const cacheKey = rawProfile;
 
-        // Run avatar fetch and work sample fetch in parallel
         await Promise.all([
 
           // Avatar
