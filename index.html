@@ -66,12 +66,7 @@
     .info-row a:hover { text-decoration: underline; }
     .notes-box { font-size: 12px; color: var(--muted); background: var(--bg); border-radius: var(--radius-sm); padding: 8px 12px; margin-top: 10px; line-height: 1.6; border-left: 2px solid var(--border-md); }
 
-    /* Enrich button */
-    .enrich-btn { width: 100%; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 0; border-radius: var(--radius-sm); border: 1px dashed var(--border-md); background: transparent; color: var(--muted); font-size: 13px; font-family: inherit; cursor: pointer; transition: all 0.15s; }
-    .enrich-btn:hover { background: var(--accent-bg); color: var(--accent-fg); border-color: #AFA9EC; border-style: solid; }
-    .enrich-btn i { font-size: 15px; }
-    .enrich-btn.loading { opacity: 0.6; cursor: not-allowed; pointer-events: none; }
-    .enrich-btn.loading i { animation: spin 1s linear infinite; }
+
 
     /* Enriched panel */
     .enriched-panel { margin-top: 12px; background: var(--bg); border-radius: var(--radius-sm); padding: 12px 14px; border: 1px solid var(--border); }
@@ -85,11 +80,7 @@
     .meta-item strong { color: var(--text); font-weight: 500; }
     .enrich-error { font-size: 12px; color: #A32D2D; margin-top: 8px; }
 
-    /* Loading bar */
-    .loading-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 10px; display: none; }
-    .loading-bar.active { display: block; }
-    .loading-bar-inner { height: 100%; width: 40%; background: var(--accent); border-radius: 2px; animation: slide 1.4s ease-in-out infinite; }
-    @keyframes slide { 0%{margin-left:-40%} 100%{margin-left:140%} }
+
 
     .empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--hint); }
     .empty i { font-size: 48px; margin-bottom: 12px; display: block; }
@@ -144,7 +135,6 @@
 
   let talents = [];
   let lastUpdated = null;
-  const enrichCache = {};
   const FIELD_ALIASES = {
     name: ["name", "talent", "full name"],
     title: ["title", "role", "job title", "headline"],
@@ -237,17 +227,10 @@
     const referredRow=t.referred?`<div class="info-row"><i class="ti ti-users" aria-hidden="true"></i><span>Referred by ${t.referred}</span></div>`:"";
     const notesBlock=t.notes?`<div class="notes-box">${t.notes}</div>`:"";
     const starsStr=stars(t.rating);
-    const cacheKey=t.profile||t.name;
-    const cached=enrichCache[cacheKey];
-    const enrichSection=t.profile
-      ? (cached
-          ? enrichedPanelHTML(cached)
-          : `<div class="loading-bar" id="bar-${i}"><div class="loading-bar-inner"></div></div>
-             <button class="enrich-btn" id="ebtn-${i}" onclick="enrichTalent(${i})">
-               <i class="ti ti-sparkles" aria-hidden="true"></i> Enrich profile
-             </button>
-             <div id="epanel-${i}"></div>`)
-      : "";
+
+    // Auto-extract skills from title and notes
+    const enriched = extractProfileDetails(t, "");
+    const enrichSection = enrichedPanelHTML(enriched);
 
     return `<div class="card" id="card-${i}">
       <div class="card-top">
@@ -270,48 +253,47 @@
     </div>`;
   }
 
-  function cleanProfileText(html) {
-    return String(html||"")
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&nbsp;/g, " ")
-      .replace(/&amp;/g, "&")
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
 
-  function extractProfileDetails(t, html) {
-    const text = cleanProfileText(html);
-    const lower = text.toLowerCase();
-    const skillWords = [
-      "javascript", "typescript", "react", "vue", "angular", "node", "python", "django", "flask",
-      "wordpress", "shopify", "webflow", "figma", "photoshop", "illustrator", "after effects",
-      "seo", "copywriting", "content", "marketing", "email marketing", "social media",
-      "analytics", "google ads", "meta ads", "video editing", "motion graphics", "ui", "ux",
-      "product design", "graphic design", "branding", "salesforce", "hubspot", "automation",
-      "zapier", "make", "airtable", "notion", "excel", "data analysis", "sql"
+
+  function extractProfileDetails(t) {
+    // Parse skills from the title field — titles like "Expert Web Designer | Framer Certified | CRO"
+    const titleParts = (t.title||"").split(/[|,·\/]/).map(s => s.trim()).filter(s => s.length > 1 && s.length < 40);
+
+    // Also scan title + notes for known skill keywords
+    const searchText = [(t.title||""), (t.notes||"")].join(" ").toLowerCase();
+    const SKILL_KEYWORDS = [
+      "figma","framer","webflow","wordpress","shopify","squarespace","wix",
+      "react","vue","angular","javascript","typescript","node","python","php","html","css",
+      "ui design","ux design","ux/ui","product design","graphic design","branding","identity design",
+      "motion design","after effects","premiere","illustrator","photoshop","indesign",
+      "copywriting","content writing","seo","email marketing","social media","ads","google ads","meta ads",
+      "video editing","3d","blender","cinema 4d","unreal","unity",
+      "salesforce","hubspot","zapier","airtable","notion","excel","data analysis","sql",
+      "android","ios","flutter","swift","kotlin","react native",
+      "cro","conversion","landing page","e-commerce","saas","fintech",
+      "brand strategy","market research","positioning","user research","prototyping","wireframing",
     ];
-    const skills = skillWords.filter(skill => lower.includes(skill)).slice(0, 8)
-      .map(skill => skill.replace(/\b\w/g, c => c.toUpperCase()));
-    const projectMatch = text.match(/(\d[\d,]*)\s+(?:projects?|jobs?|orders?)\b/i);
-    const responseMatch = text.match(/(?:responds?|response)\s+(?:within|time)?\s*([\w\s-]{2,24})/i);
-    const badgeMatch = text.match(/\b(top rated plus|top rated|rising talent|pro verified|expert-vetted|certified)\b/i);
-    const usefulSentences = text
-      .split(/(?<=[.!?])\s+/)
-      .filter(s => s.length > 45 && s.length < 220 && !/cookie|privacy|terms|sign in|log in/i.test(s));
-    const bio = usefulSentences.slice(0, 2).join(" ") ||
-      [t.title, t.source, t.location].filter(Boolean).join(" · ") ||
-      "Profile details were found, but the page did not expose a clean public summary.";
+    const foundKeywords = SKILL_KEYWORDS
+      .filter(k => searchText.includes(k))
+      .map(k => k.replace(/\b\w/g, c => c.toUpperCase()));
+
+    // Merge title parts + keywords, deduplicate, cap at 8
+    const allSkills = [...new Set([...titleParts, ...foundKeywords])].slice(0, 8);
+
+    // Build a bio from available fields
+    const bioParts = [];
+    if (t.title) bioParts.push(t.title);
+    if (t.location) bioParts.push(`Based in ${t.location}`);
+    if (t.source) bioParts.push(`Found on ${t.source}`);
+    if (t.notes) bioParts.push(t.notes);
+    const bio = bioParts.join(". ").replace(/\.{2,}/g, ".").trim();
 
     return {
-      skills,
-      bio,
-      projects: projectMatch ? projectMatch[1] : null,
-      responseTime: responseMatch ? responseMatch[1].trim() : null,
-      badge: badgeMatch ? badgeMatch[1].replace(/\b\w/g, c => c.toUpperCase()) : null
+      skills: allSkills,
+      bio: bio || null,
+      projects: null,
+      responseTime: null,
+      badge: null,
     };
   }
 
@@ -328,50 +310,6 @@
       ${data.bio?`<div class="panel-label">About</div><div class="bio-text">${data.bio}</div>`:""}
       ${metaItems?`<div class="panel-label">Highlights</div><div class="meta-row">${metaItems}</div>`:""}
     </div>`;
-  }
-
-  // ── Get index of talent in current filtered list ──
-  function getTalentByIndex(i) {
-    return filtered()[i];
-  }
-
-  async function enrichTalent(i) {
-    const t = getTalentByIndex(i);
-    if (!t || !t.profile) return;
-
-    const btn = document.getElementById("ebtn-"+i);
-    const bar = document.getElementById("bar-"+i);
-    const panel = document.getElementById("epanel-"+i);
-
-    if (btn) { btn.classList.add("loading"); btn.innerHTML='<i class="ti ti-loader" aria-hidden="true"></i> Fetching profile…'; }
-    if (bar) bar.classList.add("active");
-
-    try {
-      // Step 1: fetch profile HTML via Apps Script
-      const fetchUrl = APPS_SCRIPT_URL + "?action=fetch&url=" + encodeURIComponent(safeUrl(t.profile));
-      const fetchRes = await fetch(fetchUrl);
-      const fetchJson = await fetchRes.json();
-
-      if (fetchJson.error || !fetchJson.html) throw new Error(fetchJson.error || "Empty page");
-
-      if (btn) btn.innerHTML='<i class="ti ti-loader" aria-hidden="true"></i> Reading profile…';
-
-      const enriched = extractProfileDetails(t, fetchJson.html);
-
-      // Cache and display
-      const cacheKey = t.profile || t.name;
-      enrichCache[cacheKey] = enriched;
-
-      if (btn) btn.style.display = "none";
-      if (bar) bar.classList.remove("active");
-      if (panel) panel.innerHTML = enrichedPanelHTML(enriched);
-
-    } catch(err) {
-      if (btn) { btn.classList.remove("loading"); btn.innerHTML='<i class="ti ti-sparkles" aria-hidden="true"></i> Enrich profile'; }
-      if (bar) bar.classList.remove("active");
-      if (panel) panel.innerHTML = `<div class="enrich-error"><i class="ti ti-alert-circle" aria-hidden="true"></i> Could not enrich this profile. Try again later.</div>`;
-      console.error(err);
-    }
   }
 
   async function syncData() {
