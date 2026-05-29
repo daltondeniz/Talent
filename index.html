@@ -428,11 +428,8 @@
     if (btn) { btn.classList.add("removing"); btn.innerHTML='<i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Removing…'; }
 
     try {
-      const res = await fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "remove", name: t.name })
-      });
+      const url = APPS_SCRIPT_URL + "?action=remove&name=" + encodeURIComponent(t.name);
+      const res = await fetch(url);
       const json = await res.json();
       if (json.error) throw new Error(json.error);
 
