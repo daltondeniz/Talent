@@ -135,7 +135,11 @@
     .sample-loading-bar-inner { height: 100%; background: var(--accent); border-radius: 2px; animation: slide 1.4s ease-in-out infinite; }
     @keyframes slide { 0%{margin-left:-40%} 100%{margin-left:140%} }
 
-    /* Empty */
+    /* Remove button */
+    .remove-btn { width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 0; border-radius: var(--radius-sm); border: 1px solid rgba(226,75,74,0.2); background: transparent; color: #c0392b; font-size: 12px; font-family: inherit; cursor: pointer; transition: all 0.15s; }
+    .remove-btn:hover { background: #FCEBEB; border-color: #E24B4A; }
+    .remove-btn i { font-size: 14px; }
+    .remove-btn.removing { opacity: 0.5; pointer-events: none; }
     .empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--hint); }
     .empty i { font-size: 48px; margin-bottom: 12px; display: block; }
     .empty p { font-size: 14px; }
@@ -259,6 +263,8 @@
     const stat=document.getElementById("sel-status").value;
     const typ=document.getElementById("sel-type").value;
     return talents.filter(t=>{
+      // Never show removed talents
+      if (/^removed?$/i.test((t.status||"").trim())) return false;
       const blob=[t.name,t.title,t.location,t.source,t.type,t.notes,t.referred].join(" ").toLowerCase();
       return(!q||blob.includes(q))&&(!src||t.source===src)&&(!stat||t.status===stat)&&(!typ||t.type===typ);
     });
@@ -318,6 +324,9 @@
       <div class="divider"></div>
       ${locationRow}${profileLink}${linkedinLink}${emailRow}${referredRow}${notesBlock}
       ${sampleSection}
+      <button class="remove-btn" id="rbtn-${i}" onclick="removeTalent(${i})">
+        <i class="ti ti-trash" aria-hidden="true"></i> Remove from results
+      </button>
     </div>`;
   }
 
@@ -407,6 +416,35 @@
         imageCache[cacheKey] = imageUrl;
         setSamplePanel(idx, imageUrl, profileUrl);
       }));
+    }
+  }
+
+  async function removeTalent(i) {
+    const data = filtered();
+    const t = data[i];
+    if (!t) return;
+
+    const btn = document.getElementById("rbtn-"+i);
+    if (btn) { btn.classList.add("removing"); btn.innerHTML='<i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Removing…'; }
+
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "remove", name: t.name })
+      });
+      const json = await res.json();
+      if (json.error) throw new Error(json.error);
+
+      // Update local data so card disappears immediately
+      const idx = talents.findIndex(x => x.name === t.name);
+      if (idx >= 0) talents[idx].status = "Removed";
+      toast(`✓ ${t.name} removed`);
+      render();
+    } catch(err) {
+      if (btn) { btn.classList.remove("removing"); btn.innerHTML='<i class="ti ti-trash"></i> Remove from results'; }
+      toast("Could not remove — check Apps Script is redeployed");
+      console.error(err);
     }
   }
 
