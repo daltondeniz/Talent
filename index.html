@@ -323,20 +323,21 @@
 
 
 
-  // ── Fetch og:image + avatar for visible cards in batches ──
+  // ── Fetch og:image directly from browser via CORS proxy ──
   const imageCache = {};
   const avatarCache = {};
 
-  function setSamplePanel(id, dataUrl, profileUrl) {
+  function setSamplePanel(id, imageUrl, profileUrl) {
     const panel = document.getElementById("sample-"+id);
     if (!panel) return;
     const loadingEl = panel.querySelector(".sample-loading");
     if (!loadingEl) return;
-    if (dataUrl) {
+    if (imageUrl) {
       loadingEl.outerHTML = `
         <div class="sample-img-wrap">
           <a href="${profileUrl}" target="_blank" rel="noopener">
-            <img src="${dataUrl}" alt="Work sample" />
+            <img src="${imageUrl}" alt="Work sample"
+              onerror="this.closest('.sample-img-wrap').innerHTML='<div class=\\'sample-placeholder\\'><i class=\\'ti ti-photo-off\\'></i><span>Preview unavailable</span></div>'" />
             <div class="sample-overlay"><span><i class="ti ti-external-link" style="font-size:13px"></i> View full profile</span></div>
           </a>
         </div>`;
@@ -351,11 +352,39 @@
 
   function setAvatar(id, dataUrl) {
     const el = document.getElementById("avatar-"+id);
-    if (!el) return;
-    if (dataUrl) {
-      el.innerHTML = `<img src="${dataUrl}" alt="Profile photo" />`;
+    if (!el || !dataUrl) return;
+    el.innerHTML = `<img src="${dataUrl}" alt="Profile photo" />`;
+  }
+
+  async function fetchOgImageBrowser(profileUrl) {
+    // Try multiple CORS proxies in order
+    const proxies = [
+      `https://corsproxy.io/?${encodeURIComponent(profileUrl)}`,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(profileUrl)}`,
+    ];
+
+    for (const proxy of proxies) {
+      try {
+        const res = await fetch(proxy, { signal: AbortSignal.timeout(8000) });
+        if (!res.ok) continue;
+        const html = await res.text();
+        if (!html || html.length < 100) continue;
+
+        // Extract og:image or twitter:image
+        const patterns = [
+          /property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
+          /content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
+          /name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i,
+          /content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i,
+        ];
+        for (const p of patterns) {
+          const m = html.match(p);
+          if (m && m[1] && m[1].startsWith("http")) return m[1];
+        }
+        return null; // page loaded but no og:image found
+      } catch { continue; }
     }
-    // if no dataUrl, keep initials as-is
+    return null;
   }
 
   async function fetchImagesForVisible(data) {
@@ -369,45 +398,14 @@
         const profileUrl = safeUrl(rawProfile);
         const cacheKey = rawProfile;
 
-        await Promise.all([
+        if (imageCache[cacheKey] !== undefined) {
+          setSamplePanel(idx, imageCache[cacheKey], profileUrl);
+          return;
+        }
 
-          // Avatar
-          (async () => {
-            if (avatarCache[cacheKey] !== undefined) {
-              setAvatar(idx, avatarCache[cacheKey]);
-              return;
-            }
-            try {
-              const res = await fetch(APPS_SCRIPT_URL + "?action=avatar&url=" + encodeURIComponent(profileUrl));
-              const json = await res.json();
-              avatarCache[cacheKey] = json.dataUrl || null;
-              setAvatar(idx, avatarCache[cacheKey]);
-            } catch {
-              avatarCache[cacheKey] = null;
-            }
-          })(),
-
-          // Work sample (og:image → proxy)
-          (async () => {
-            if (imageCache[cacheKey] !== undefined) {
-              setSamplePanel(idx, imageCache[cacheKey], profileUrl);
-              return;
-            }
-            try {
-              const ogRes = await fetch(APPS_SCRIPT_URL + "?action=ogimage&url=" + encodeURIComponent(profileUrl));
-              const ogJson = await ogRes.json();
-              if (!ogJson.proxyUrl) { imageCache[cacheKey] = null; setSamplePanel(idx, null, profileUrl); return; }
-              const imgRes = await fetch(ogJson.proxyUrl);
-              const imgJson = await imgRes.json();
-              imageCache[cacheKey] = imgJson.dataUrl || null;
-              setSamplePanel(idx, imageCache[cacheKey], profileUrl);
-            } catch {
-              imageCache[cacheKey] = null;
-              setSamplePanel(idx, null, profileUrl);
-            }
-          })(),
-
-        ]);
+        const imageUrl = await fetchOgImageBrowser(profileUrl);
+        imageCache[cacheKey] = imageUrl;
+        setSamplePanel(idx, imageUrl, profileUrl);
       }));
     }
   }
