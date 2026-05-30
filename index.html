@@ -1,3 +1,470 @@
-Hello Rob and Sydney,
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Talent Directory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:         #F6F6F9;
+      --surface:    #FFFFFF;
+      --surface-2:  rgba(45,21,147,0.04);
+      --border:     rgba(45,21,147,0.1);
+      --border-md:  rgba(45,21,147,0.2);
+      --text:       #191926;
+      --muted:      #4a4870;
+      --hint:       #8577C4;
+      --accent:     #2D1593;
+      --accent-alt: #3C02FE;
+      --accent-bg:  rgba(45,21,147,0.07);
+      --accent-fg:  #2D1593;
+      --purple-mid: #8577C4;
+      --deep:       #180E70;
+      --radius-sm:  8px;
+      --radius-md:  12px;
+      --radius-lg:  16px;
+      --shadow:     0 1px 4px rgba(25,25,38,0.07), 0 0 0 1px rgba(45,21,147,0.06);
+      --shadow-hover: 0 6px 20px rgba(45,21,147,0.13), 0 0 0 1px rgba(45,21,147,0.12);
+    }
 
-Attached is my May 3rd week invoice, thanks
+    body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+    .page { max-width: 1200px; margin: 0 auto; padding: 0 24px 80px; }
+
+    /* Header */
+    .site-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 28px 0 24px; margin-bottom: 32px; flex-wrap: wrap; gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .site-header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; color: var(--text); }
+    .site-header p  { font-size: 14px; color: var(--muted); margin-top: 2px; }
+    .header-actions { display: flex; gap: 8px; }
+
+    .btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border-md);
+      background: var(--surface); color: var(--accent);
+      font-size: 13px; font-family: inherit; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .btn:hover { background: var(--accent-bg); border-color: var(--accent); }
+    .btn i { font-size: 15px; }
+    .btn.spinning i { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Controls */
+    .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .search-wrap { position: relative; flex: 1; min-width: 220px; }
+    .search-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 17px; color: var(--hint); pointer-events: none; }
+    .search-wrap input {
+      width: 100%; height: 42px; padding: 0 14px 0 40px;
+      border: 1px solid var(--border-md); border-radius: var(--radius-sm);
+      background: var(--surface); color: var(--text);
+      font-size: 14px; font-family: inherit; box-shadow: var(--shadow);
+    }
+    .search-wrap input:focus { outline: none; border-color: var(--accent-alt); box-shadow: 0 0 0 3px rgba(60,2,254,0.1); }
+    .search-wrap input::placeholder { color: var(--hint); }
+    select {
+      height: 42px; padding: 0 12px;
+      border: 1px solid var(--border-md); border-radius: var(--radius-sm);
+      background: var(--surface); color: var(--text);
+      font-size: 13px; font-family: inherit; cursor: pointer; box-shadow: var(--shadow);
+    }
+    select:focus { outline: none; border-color: var(--accent); }
+
+    /* Stats */
+    .stats-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
+    .stats-text { font-size: 13px; color: var(--muted); }
+    .last-updated { font-size: 12px; color: var(--hint); }
+    .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; background: var(--hint); vertical-align: middle; }
+    .dot.live { background: #39B06A; }
+    .dot.err  { background: #E24B4A; }
+
+    /* Grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+      transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+    }
+    .card:hover { border-color: var(--accent); box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+    .card-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; flex-shrink: 0; overflow: hidden; }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+    .avatar-initials { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; }
+    .card-name  { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.3; }
+    .card-title { font-size: 13px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+    .badge-row  { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+    .badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+    .badge-source { background: rgba(24,14,112,0.08);  color: #180E70; }
+    .badge-status { background: rgba(45,21,147,0.08);  color: #2D1593; }
+    .badge-type   { background: rgba(133,119,196,0.15); color: #2D1593; }
+    .badge-rate   { background: rgba(60,2,254,0.07);   color: #180E70; }
+    .stars { color: #F6A800; font-size: 13px; margin-top: 6px; letter-spacing: 1px; }
+    .divider { border-top: 1px solid var(--border); margin: 12px 0; }
+    .info-row { font-size: 13px; color: var(--muted); display: flex; align-items: flex-start; gap: 8px; margin-bottom: 7px; line-height: 1.4; }
+    .info-row i { font-size: 15px; flex-shrink: 0; margin-top: 1px; color: var(--hint); }
+    .info-row a { color: var(--accent-alt); text-decoration: none; font-weight: 500; }
+    .info-row a:hover { text-decoration: underline; color: var(--accent); }
+    .notes-box { font-size: 12px; color: var(--muted); background: var(--surface-2); border-radius: var(--radius-sm); padding: 8px 12px; margin-top: 10px; line-height: 1.6; border-left: 2px solid var(--accent); }
+
+    /* Work sample panel */
+    .sample-panel { margin-top: 12px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); }
+    .sample-label { font-size: 10px; font-weight: 600; color: var(--hint); text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 12px 6px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+    .sample-img-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: var(--surface-2); overflow: hidden; }
+    .sample-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s ease; }
+    .sample-img-wrap:hover img { transform: scale(1.03); }
+    .sample-img-wrap a { display: block; width: 100%; height: 100%; }
+    .sample-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(24,14,112,0.6) 0%, transparent 50%); opacity: 0; transition: opacity 0.2s; display: flex; align-items: flex-end; padding: 12px; }
+    .sample-img-wrap:hover .sample-overlay { opacity: 1; }
+    .sample-overlay span { font-size: 12px; font-weight: 500; color: #fff; display: flex; align-items: center; gap: 5px; }
+    .sample-placeholder { width: 100%; aspect-ratio: 16/9; background: var(--surface-2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--hint); font-size: 12px; }
+    .sample-placeholder i { font-size: 28px; opacity: 0.4; }
+    .sample-loading { width: 100%; aspect-ratio: 16/9; background: var(--surface-2); display: flex; align-items: center; justify-content: center; }
+    .sample-loading-bar { width: 60%; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .sample-loading-bar-inner { height: 100%; background: var(--accent); border-radius: 2px; animation: slide 1.4s ease-in-out infinite; }
+    @keyframes slide { 0%{margin-left:-40%} 100%{margin-left:140%} }
+
+    /* Remove button */
+    .remove-btn { width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 0; border-radius: var(--radius-sm); border: 1px solid rgba(226,75,74,0.2); background: transparent; color: #c0392b; font-size: 12px; font-family: inherit; cursor: pointer; transition: all 0.15s; }
+    .remove-btn:hover { background: #FCEBEB; border-color: #E24B4A; }
+    .remove-btn i { font-size: 14px; }
+    .remove-btn.removing { opacity: 0.5; pointer-events: none; }
+    .empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--hint); }
+    .empty i { font-size: 48px; margin-bottom: 12px; display: block; }
+    .empty p { font-size: 14px; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--deep); color: #fff; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 999; white-space: nowrap; }
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 600px) { .page { padding: 0 16px 60px; } .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="page">
+  <header class="site-header">
+    <div>
+      <h1>Talent Directory</h1>
+      <p id="header-sub">Loading…</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="sync-btn" onclick="syncData()">
+        <i class="ti ti-refresh"></i> Sync sheet
+      </button>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="search-wrap">
+      <i class="ti ti-search"></i>
+      <input type="text" id="search" placeholder="Search by name, title, location, notes…" oninput="render()" />
+    </div>
+    <select id="sel-source" onchange="render()"><option value="">All sources</option></select>
+  </div>
+
+  <div class="stats-row">
+    <span class="stats-text" id="stats-text"></span>
+    <span class="last-updated" id="last-updated"></span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwm_0z0mQeW5WJMQAeIABofLxEyB3pURSoRcgbnu0xxlmI7GQ1ooKdNtJ061PyKxF__/exec";
+
+  const AVATAR_COLORS = [
+    ["#2D1593","#ffffff"],
+    ["#180E70","#ffffff"],
+    ["rgba(45,21,147,0.1)","#2D1593"],
+    ["rgba(133,119,196,0.2)","#180E70"],
+    ["#3C02FE","#ffffff"],
+    ["rgba(60,2,254,0.1)","#180E70"],
+  ];
+
+  let talents = [];
+  let lastUpdated = null;
+  const FIELD_ALIASES = {
+    name: ["name", "talent", "full name"],
+    title: ["title", "role", "job title", "headline"],
+    profile: ["profile", "profile url", "profile link", "profile_url", "profilelink", "url", "website", "portfolio", "portfolio url", "portfolio link", "talent profile"],
+    linkedin: ["linkedin", "linkedin url", "linkedin link", "linked in"],
+    email: ["email", "email address"],
+    location: ["location", "city", "country"],
+    referred: ["referred", "referred by", "referrer"],
+    notes: ["notes", "note", "comments", "comment"],
+    source: ["source", "platform"],
+    status: ["status"],
+    type: ["type", "talent type"],
+    rate: ["rate", "hourly rate", "price"],
+    rating: ["rating", "stars"]
+  };
+
+  function initials(n) { return (n||"?").split(" ").map(w=>w[0]||"").join("").slice(0,2).toUpperCase(); }
+  function avatarColor(n) { return AVATAR_COLORS[(n.charCodeAt(0)||0) % AVATAR_COLORS.length]; }
+  function stars(r) { const n=parseInt(r)||0; return n?"★".repeat(n)+"☆".repeat(Math.max(0,5-n)):""; }
+  function safeUrl(u) { if(!u)return""; return u.startsWith("http")?u:"https://"+u; }
+  // Take only the first URL from multiline profile fields
+  function firstUrl(u) { return (u||"").split(/[\n\r]+/)[0].trim(); }
+  function normalizeKey(k) { return String(k||"").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+  function pickField(row, aliases) {
+    const lookup = Object.keys(row||{}).reduce((acc, key) => {
+      acc[normalizeKey(key)] = key;
+      return acc;
+    }, {});
+
+    for (const alias of aliases) {
+      const key = lookup[normalizeKey(alias)];
+      const value = key ? row[key] : row[alias];
+      if (value !== undefined && value !== null && String(value).trim()) return String(value).trim();
+    }
+    return "";
+  }
+  function normalizeTalent(row) {
+    const normalized = { ...row };
+    Object.entries(FIELD_ALIASES).forEach(([field, aliases]) => {
+      normalized[field] = normalized[field] || pickField(row, aliases);
+    });
+    return normalized;
+  }
+  function toast(msg) {
+    const el=document.getElementById("toast");
+    el.textContent=msg; el.classList.add("show");
+    setTimeout(()=>el.classList.remove("show"),2800);
+  }
+
+  function populateSelects() {
+    const el = document.getElementById("sel-source");
+    const cur = el.value;
+    const opts = [...new Set(talents.map(t=>t.source).filter(Boolean).map(s=>s.trim()))].sort();
+    el.innerHTML = `<option value="">All sources</option>` + opts.map(o=>`<option value="${o}"${o===cur?" selected":""}>${o}</option>`).join("");
+  }
+
+  function filtered() {
+    const q=(document.getElementById("search").value||"").toLowerCase().trim();
+    const src=document.getElementById("sel-source").value;
+    return talents.filter(t=>{
+      if (/^removed?$/i.test((t.status||"").trim())) return false;
+      const blob=[t.name,t.title,t.location,t.source,t.type,t.notes,t.referred].join(" ").toLowerCase();
+      return(!q||blob.includes(q))&&(!src||t.source===src);
+    });
+  }
+
+  function render() {
+    populateSelects();
+    const data=filtered();
+    document.getElementById("stats-text").innerHTML=
+      `<span class="dot ${talents.length?'live':''}"></span>Showing <strong>${data.length}</strong> of <strong>${talents.length}</strong> talents`;
+    if(lastUpdated) document.getElementById("last-updated").textContent="Last synced: "+new Date(lastUpdated).toLocaleString();
+
+    const grid=document.getElementById("grid");
+    if(!data.length){
+      grid.innerHTML=`<div class="empty"><i class="ti ti-mood-empty"></i><p>No talents match your search.</p></div>`;
+      return;
+    }
+    grid.innerHTML=data.map((t,i)=>cardHTML(t,i)).join("");
+    // Fetch work sample images after cards are in the DOM
+    fetchImagesForVisible(data);
+  }
+
+  function cardHTML(t, i) {
+    const [bg,fg]=avatarColor(t.name);
+    const profileLink=t.profile?`<div class="info-row"><i class="ti ti-external-link" aria-hidden="true"></i><a href="${safeUrl(firstUrl(t.profile))}" target="_blank" rel="noopener">View profile</a></div>`:"";
+    const linkedinLink=t.linkedin?`<div class="info-row"><i class="ti ti-brand-linkedin" aria-hidden="true"></i><a href="${safeUrl(firstUrl(t.linkedin))}" target="_blank" rel="noopener">LinkedIn</a></div>`:"";
+    const emailRow=t.email?`<div class="info-row"><i class="ti ti-mail" aria-hidden="true"></i><a href="mailto:${t.email}">${t.email}</a></div>`:"";
+    const locationRow=t.location?`<div class="info-row"><i class="ti ti-map-pin" aria-hidden="true"></i><span>${t.location}</span></div>`:"";
+    const referredRow=t.referred?`<div class="info-row"><i class="ti ti-users" aria-hidden="true"></i><span>Referred by ${t.referred}</span></div>`:"";
+    const notesBlock=t.notes?`<div class="notes-box"><span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--hint);display:block;margin-bottom:4px">Note</span>${t.notes}</div>`:"";
+    const starsStr=stars(t.rating);
+
+    // Work sample panel — shows loading state, image fetched after render
+    const sampleSection = firstUrl(t.profile) ? `
+      <div class="sample-panel" id="sample-${i}">
+        <div class="sample-label"><i class="ti ti-photo" aria-hidden="true" style="font-size:11px;margin-right:4px;vertical-align:-1px"></i>Work Sample</div>
+        <div class="sample-loading">
+          <div class="sample-loading-bar"><div class="sample-loading-bar-inner"></div></div>
+        </div>
+      </div>` : "";
+
+    return `<div class="card" id="card-${i}">
+      <div class="card-top">
+        <div class="avatar" id="avatar-${i}" style="background:${bg};color:${fg}"><span class="avatar-initials">${initials(t.name)}</span></div>
+        <div style="flex:1;min-width:0">
+          <div class="card-name">${t.name}</div>
+          <div class="card-title">${t.title||""}</div>
+          <div class="badge-row">
+            ${t.source?`<span class="badge badge-source">${t.source}</span>`:""}
+            ${t.status?`<span class="badge badge-status">${t.status}</span>`:""}
+            ${t.type?`<span class="badge badge-type">${t.type}</span>`:""}
+            ${t.rate?`<span class="badge badge-rate">${t.rate}</span>`:""}
+          </div>
+          ${starsStr?`<div class="stars">${starsStr}</div>`:""}
+        </div>
+      </div>
+      <div class="divider"></div>
+      ${locationRow}${profileLink}${linkedinLink}${emailRow}${referredRow}${notesBlock}
+      ${sampleSection}
+      <button class="remove-btn" id="rbtn-${i}" onclick="removeTalent(${i})">
+        <i class="ti ti-trash" aria-hidden="true"></i> Remove from results
+      </button>
+    </div>`;
+  }
+
+
+
+  // ── Fetch og:image directly from browser via CORS proxy ──
+  const imageCache = {};
+  const avatarCache = {};
+
+  function setSamplePanel(id, imageUrl, profileUrl) {
+    const panel = document.getElementById("sample-"+id);
+    if (!panel) return;
+    const loadingEl = panel.querySelector(".sample-loading");
+    if (!loadingEl) return;
+    if (imageUrl) {
+      loadingEl.outerHTML = `
+        <div class="sample-img-wrap">
+          <a href="${profileUrl}" target="_blank" rel="noopener">
+            <img src="${imageUrl}" alt="Work sample"
+              onerror="this.closest('.sample-img-wrap').innerHTML='<div class=\\'sample-placeholder\\'><i class=\\'ti ti-photo-off\\'></i><span>Preview unavailable</span></div>'" />
+            <div class="sample-overlay"><span><i class="ti ti-external-link" style="font-size:13px"></i> View full profile</span></div>
+          </a>
+        </div>`;
+    } else {
+      loadingEl.outerHTML = `
+        <div class="sample-placeholder">
+          <i class="ti ti-photo-off" aria-hidden="true"></i>
+          <span>Preview unavailable</span>
+        </div>`;
+    }
+  }
+
+  function setAvatar(id, dataUrl) {
+    const el = document.getElementById("avatar-"+id);
+    if (!el || !dataUrl) return;
+    el.innerHTML = `<img src="${dataUrl}" alt="Profile photo" />`;
+  }
+
+  async function fetchOgImageBrowser(profileUrl) {
+    // Try multiple CORS proxies in order
+    const proxies = [
+      `https://corsproxy.io/?${encodeURIComponent(profileUrl)}`,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(profileUrl)}`,
+    ];
+
+    for (const proxy of proxies) {
+      try {
+        const res = await fetch(proxy, { signal: AbortSignal.timeout(8000) });
+        if (!res.ok) continue;
+        const html = await res.text();
+        if (!html || html.length < 100) continue;
+
+        // Extract og:image or twitter:image
+        const patterns = [
+          /property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
+          /content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
+          /name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i,
+          /content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i,
+        ];
+        for (const p of patterns) {
+          const m = html.match(p);
+          if (m && m[1] && m[1].startsWith("http")) return m[1];
+        }
+        return null; // page loaded but no og:image found
+      } catch { continue; }
+    }
+    return null;
+  }
+
+  async function fetchImagesForVisible(data) {
+    const BATCH = 4;
+    for (let i = 0; i < data.length; i += BATCH) {
+      const batch = data.slice(i, i + BATCH);
+      await Promise.all(batch.map(async (t, bi) => {
+        const idx = i + bi;
+        const rawProfile = firstUrl(t.profile);
+        if (!rawProfile) return;
+        const profileUrl = safeUrl(rawProfile);
+        const cacheKey = rawProfile;
+
+        if (imageCache[cacheKey] !== undefined) {
+          setSamplePanel(idx, imageCache[cacheKey], profileUrl);
+          return;
+        }
+
+        const imageUrl = await fetchOgImageBrowser(profileUrl);
+        imageCache[cacheKey] = imageUrl;
+        setSamplePanel(idx, imageUrl, profileUrl);
+      }));
+    }
+  }
+
+  async function removeTalent(i) {
+    const data = filtered();
+    const t = data[i];
+    if (!t) return;
+
+    const btn = document.getElementById("rbtn-"+i);
+    if (btn) { btn.classList.add("removing"); btn.innerHTML='<i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Removing…'; }
+
+    try {
+      const url = APPS_SCRIPT_URL + "?action=remove&name=" + encodeURIComponent(t.name);
+      const res = await fetch(url);
+      const json = await res.json();
+      if (json.error) throw new Error(json.error);
+
+      // Update local data so card disappears immediately
+      const idx = talents.findIndex(x => x.name === t.name);
+      if (idx >= 0) talents[idx].status = "Removed";
+      toast(`✓ ${t.name} removed`);
+      render();
+    } catch(err) {
+      if (btn) { btn.classList.remove("removing"); btn.innerHTML='<i class="ti ti-trash"></i> Remove from results'; }
+      toast("Could not remove — check Apps Script is redeployed");
+      console.error(err);
+    }
+  }
+
+  async function syncData() {
+    const btn=document.getElementById("sync-btn");
+    btn.classList.add("spinning");
+    try {
+      const res=await fetch(APPS_SCRIPT_URL);
+      if(!res.ok)throw new Error("HTTP "+res.status);
+      const json=await res.json();
+      if(json.error)throw new Error(json.error);
+      talents=(json.talents||[]).map(normalizeTalent);
+      lastUpdated=json.updatedAt;
+      document.getElementById("header-sub").textContent=`${talents.length} talents · live from Google Sheets`;
+      render();
+      toast(`✓ Synced ${talents.length} talents`);
+    } catch(e) {
+      toast("Sync failed — check your Apps Script URL");
+      document.getElementById("header-sub").textContent="Sync failed";
+      console.error(e);
+    } finally {
+      btn.classList.remove("spinning");
+    }
+  }
+
+  async function init() {
+    await syncData();
+    setInterval(syncData, 5 * 60 * 1000);
+  }
+
+  init();
+</script>
+</body>
+</html>
