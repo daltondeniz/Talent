@@ -171,6 +171,7 @@
       <input type="text" id="search" placeholder="Search by name, title, location, notes…" oninput="render()" />
     </div>
     <select id="sel-source" onchange="render()"><option value="">All sources</option></select>
+    <select id="sel-title" onchange="render()"><option value="">All titles</option></select>
   </div>
 
   <div class="stats-row">
@@ -246,19 +247,27 @@
   }
 
   function populateSelects() {
-    const el = document.getElementById("sel-source");
-    const cur = el.value;
-    const opts = [...new Set(talents.map(t=>t.source).filter(Boolean).map(s=>s.trim()))].sort();
-    el.innerHTML = `<option value="">All sources</option>` + opts.map(o=>`<option value="${o}"${o===cur?" selected":""}>${o}</option>`).join("");
+    // Source dropdown
+    const srcEl = document.getElementById("sel-source");
+    const curSrc = srcEl.value;
+    const srcOpts = [...new Set(talents.filter(t => !/^removed?$/i.test((t.status||"").trim())).map(t=>t.source).filter(Boolean).map(s=>s.trim()))].sort();
+    srcEl.innerHTML = `<option value="">All sources</option>` + srcOpts.map(o=>`<option value="${o}"${o===curSrc?" selected":""}>${o}</option>`).join("");
+
+    // Title dropdown — only titles that have at least one visible talent
+    const titleEl = document.getElementById("sel-title");
+    const curTitle = titleEl.value;
+    const titleOpts = [...new Set(talents.filter(t => !/^removed?$/i.test((t.status||"").trim()) && t.title).map(t=>t.title.trim()))].sort();
+    titleEl.innerHTML = `<option value="">All titles</option>` + titleOpts.map(o=>`<option value="${o}"${o===curTitle?" selected":""}>${o}</option>`).join("");
   }
 
   function filtered() {
     const q=(document.getElementById("search").value||"").toLowerCase().trim();
     const src=document.getElementById("sel-source").value;
+    const title=document.getElementById("sel-title").value;
     return talents.filter(t=>{
       if (/^removed?$/i.test((t.status||"").trim())) return false;
       const blob=[t.name,t.title,t.location,t.source,t.type,t.notes,t.referred].join(" ").toLowerCase();
-      return(!q||blob.includes(q))&&(!src||t.source===src);
+      return(!q||blob.includes(q))&&(!src||t.source===src)&&(!title||t.title===title);
     });
   }
 
